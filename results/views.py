@@ -12,6 +12,7 @@ from courses.models import CourseOffering
 from enrollments.models import Enrollment
 from exams.models import GradeScale, Marks
 from .models import Result
+from accounts.permissions import can
 
 
 def _get_grade_for_total(total):
@@ -50,6 +51,8 @@ def _recalc_result(enrollment):
 @login_required(login_url="accounts:login_page")
 @never_cache
 def results_view(request):
+    if request.user.is_student():
+        return redirect("accounts:dashboard")
     search = request.GET.get("search", "").strip()
     department_id = request.GET.get("department_id", "")
     batch_id = request.GET.get("batch_id", "")
@@ -58,6 +61,9 @@ def results_view(request):
     offering_id = request.GET.get("offering_id", "")
     student_id = request.GET.get("student_id", "")
 
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if not department_id:
+            department_id = str(request.user.department_id)
     qs = Enrollment.objects.select_related(
         "student",
         "course_offering",
@@ -65,6 +71,8 @@ def results_view(request):
         "course_offering__semester",
         "course_offering__session",
     ).order_by("student__roll_no")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        qs = qs.filter(course_offering__course__department_id=request.user.department_id)
 
     if session_id:
         qs = qs.filter(course_offering__session_id=session_id)
@@ -89,11 +97,15 @@ def results_view(request):
     if request.method == "POST":
         action = request.POST.get("action", "")
         if action == "recalc_filtered":
+            if not can(request.user.role, "RESULTS", "update"):
+                return redirect("results:results")
             for enrollment in qs:
                 _recalc_result(enrollment)
             messages.success(request, "Results recalculated for current filter.")
             return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
         if action == "publish_filtered":
+            if not can(request.user.role, "RESULTS", "update"):
+                return redirect("results:results")
             for enrollment in qs:
                 result = _recalc_result(enrollment)
                 result.result_published = True
@@ -101,6 +113,8 @@ def results_view(request):
             messages.success(request, "Results published for current filter.")
             return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
         if action == "toggle_publish":
+            if not can(request.user.role, "RESULTS", "update"):
+                return redirect("results:results")
             enrollment_id = request.POST.get("enrollment_id")
             enrollment = get_object_or_404(Enrollment, pk=enrollment_id)
             result = _recalc_result(enrollment)
@@ -109,6 +123,8 @@ def results_view(request):
             messages.success(request, "Result publish status updated.")
             return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
         if action == "recalc_one":
+            if not can(request.user.role, "RESULTS", "update"):
+                return redirect("results:results")
             enrollment_id = request.POST.get("enrollment_id")
             enrollment = get_object_or_404(Enrollment, pk=enrollment_id)
             _recalc_result(enrollment)
@@ -144,6 +160,11 @@ def results_view(request):
         "offering_id": offering_id,
         "student_id": student_id,
     }
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        context["departments"] = context["departments"].filter(id=request.user.department_id)
+        context["batches"] = context["batches"].filter(department_id=request.user.department_id)
+        context["students"] = context["students"].filter(batch__department_id=request.user.department_id)
+        context["offerings"] = context["offerings"].filter(course__department_id=request.user.department_id)
     return render(request, "results/results.html", context)
 
 
@@ -151,6 +172,12 @@ def results_view(request):
 @never_cache
 def student_results_view(request, student_id):
     student = get_object_or_404(Student, pk=student_id)
+    if request.user.is_student():
+        try:
+            if request.user.student_profile.id != student.id:
+                return redirect("accounts:dashboard")
+        except Student.DoesNotExist:
+            return redirect("accounts:dashboard")
     enrollments = Enrollment.objects.select_related(
         "course_offering",
         "course_offering__course",
@@ -170,6 +197,18 @@ def student_results_view(request, student_id):
         "student": student,
         "rows": rows,
     })
+
+
+@login_required(login_url="accounts:login_page")
+@never_cache
+def my_results_view(request):
+    if not request.user.is_student():
+        return redirect("results:results")
+    try:
+        student = request.user.student_profile
+    except Student.DoesNotExist:
+        return redirect("accounts:dashboard")
+    return student_results_view(request, student.id)
 
 
 # Backward-compatible stub (in case old URLconf is still referenced)

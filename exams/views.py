@@ -12,6 +12,7 @@ from results.models import Result
 
 from .forms import ExamSplitConfigForm, GradeScaleForm, ExamRulesForm
 from .models import ExamSplitConfig, GradeScale, ExamRules, Marks, EXAM_TYPE_CHOICES
+from accounts.permissions import can
 
 
 def _get_grade_for_total(total):
@@ -100,11 +101,15 @@ def exam_rules_view(request):
 def manage_marks_view(request):
     config = ExamSplitConfig.get_solo()
     offerings = CourseOffering.objects.select_related("course", "session", "semester").order_by("course__course_code")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        offerings = offerings.filter(course__department_id=request.user.department_id)
 
     offering_id = request.GET.get("offering_id") or request.POST.get("offering_id") or ""
     enrollments = Enrollment.objects.select_related("student", "course_offering").filter(
         course_offering_id=offering_id
     ).order_by("student__roll_no") if offering_id else Enrollment.objects.none()
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        enrollments = enrollments.filter(course_offering__course__department_id=request.user.department_id)
 
     marks_map = {(m.enrollment_id, m.exam_type): m for m in Marks.objects.filter(enrollment__in=enrollments)}
     rows = []
@@ -117,6 +122,8 @@ def manage_marks_view(request):
         })
 
     if request.method == "POST" and offering_id:
+        if not can(request.user.role, "EXAMS", "update"):
+            return redirect("exams:manage_marks")
         errors = []
         for enrollment in enrollments:
             for exam_type, label in EXAM_TYPE_CHOICES:

@@ -1,4 +1,5 @@
 {% extends "dashboard/layout.html" %}
+{% load permissions_tags %}
 
 {% block title %}Courses — Result Management System{% endblock %}
 {% block topbar_display %}Courses{% endblock %}
@@ -23,12 +24,21 @@
     <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="courses" data-auto-submit>
         <div class="col-lg-3">
             <label class="form-label">Program</label>
+            {% if request.user.is_exam_officer %}
             <select title="Program" class="form-select" name="department_id">
                 <option value="">All Programs</option>
                 {% for d in departments %}
                 <option value="{{ d.id }}" {% if department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
                 {% endfor %}
             </select>
+            {% else %}
+            <input type="hidden" name="department_id" value="{{ department_id }}">
+            <select title="Program" class="form-select" name="department_id" disabled>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
         </div>
         <div class="col-lg-2">
             <label class="form-label">Course Type</label>
@@ -90,6 +100,8 @@
                             aria-expanded="false" aria-label="Edit {{ c.course_title }}">
                             <i class="fas fa-pen"></i>
                         </button>
+                        {% can request.user.role "COURSES" "delete" as can_delete_courses %}
+                        {% if can_delete_courses %}
                         <form method="post" class="d-inline"
                             onsubmit="return confirm('Delete course {{ c.course_code }}?');">
                             {% csrf_token %}
@@ -100,6 +112,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
                 <!-- Inline Edit Row -->
@@ -112,11 +125,20 @@
                                 <input type="hidden" name="course_id" value="{{ c.id }}">
                                 <div class="col-lg-3">
                                     <label class="form-label">Program *</label>
+                                    {% if request.user.is_exam_officer %}
                                     <select title="Program" class="form-select form-select-sm" name="department_id" required>
                                         {% for d in departments %}
                                         <option value="{{ d.id }}" {% if c.department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
                                         {% endfor %}
                                     </select>
+                                    {% else %}
+                                    <input type="hidden" name="department_id" value="{{ c.department_id }}">
+                                    <select title="Program" class="form-select form-select-sm" name="department_id" disabled>
+                                        {% for d in departments %}
+                                        <option value="{{ d.id }}" {% if c.department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% endif %}
                                 </div>
                                 <div class="col-lg-2">
                                     <label class="form-label">Code *</label>

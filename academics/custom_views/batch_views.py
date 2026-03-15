@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 
 from ..forms import BatchForm
 from ..models import Batch, Department
+from accounts.permissions import can
 
 
 @login_required(login_url="accounts:login_page")
@@ -14,6 +15,8 @@ from ..models import Batch, Department
 def batches_view(request):
     search = request.GET.get("search", "").strip()
     department_id = request.GET.get("department_id", "")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        department_id = str(request.user.department_id)
     qs = Batch.objects.select_related("department").order_by("-start_date")
     if department_id:
         qs = qs.filter(department_id=department_id)
@@ -27,7 +30,12 @@ def batches_view(request):
     paginator = Paginator(qs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
     form = BatchForm()
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        form.fields["department"].initial = request.user.department_id
+        form.fields["department"].disabled = True
     departments = Department.objects.filter(is_active=True)
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        departments = departments.filter(id=request.user.department_id)
 
     return render(request, "academics/batches.html", {
         "batches": page_obj,
@@ -42,8 +50,16 @@ def batches_view(request):
 @login_required(login_url="accounts:login_page")
 def create_batch(request):
     if request.method == "POST":
-        form = BatchForm(request.POST)
+        if not can(request.user.role, "BATCHES", "create"):
+            return redirect("academics:batches")
+        data = request.POST.copy()
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            data["department"] = request.user.department_id
+        form = BatchForm(data)
         if form.is_valid():
+            if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+                if form.cleaned_data["department"].id != request.user.department_id:
+                    return redirect("academics:batches")
             form.save()
             return redirect("academics:batches")
         qs = Batch.objects.select_related("department").order_by("-start_date")
@@ -64,8 +80,13 @@ def create_batch(request):
 def edit_batch(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
     if request.method == "POST":
+        if not can(request.user.role, "BATCHES", "update"):
+            return redirect("academics:batches")
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            if batch.department_id != request.user.department_id:
+                return redirect("academics:batches")
         dept_id = request.POST.get("department_id")
-        if dept_id:
+        if dept_id and not (request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id):
             batch.department_id = dept_id
         batch.title = request.POST.get("title", batch.title).strip()
         batch.name = request.POST.get("name", batch.name).strip()
@@ -80,5 +101,10 @@ def edit_batch(request, pk):
 @require_POST
 def delete_batch(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
+    if not can(request.user.role, "BATCHES", "delete"):
+        return redirect("academics:batches")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if batch.department_id != request.user.department_id:
+            return redirect("academics:batches")
     batch.delete()
     return redirect("academics:batches")

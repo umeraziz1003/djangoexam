@@ -1,4 +1,5 @@
 {% extends "dashboard/layout.html" %}
+{% load permissions_tags %}
 
 {% block title %}Enrollments — Result Management System{% endblock %}
 {% block topbar_display %}Enrollments{% endblock %}
@@ -93,9 +94,12 @@
                         <a class="btn btn-sm btn-outline-primary" href="{% url 'enrollments:edit_enrollment' e.pk %}">
                             <i class="fas fa-pen"></i>
                         </a>
+                        {% can request.user.role "ENROLLMENTS" "delete" as can_delete_enrollments %}
+                        {% if can_delete_enrollments %}
                         <a class="btn btn-sm btn-outline-danger" href="{% url 'enrollments:delete_enrollment' e.pk %}">
                             <i class="fas fa-trash"></i>
                         </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

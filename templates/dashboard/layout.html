@@ -11,11 +11,12 @@
         <div class="logo-area">
             <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
             <div>
-                <div class="logo-text">RMS<span>Core</span></div>
+                <div class="logo-text">GPGC | <span>HARIPUR</span></div>
                 <div class="logo-sub">Result Management</div>
             </div>
         </div>
 
+        <div class="sidebar-nav">
         <div class="nav-section">
             <div class="nav-label">Core</div>
             <a class="nav-item{% if '/accounts/dashboard/' in path %} active{% endif %}"
@@ -24,7 +25,7 @@
             </a>
         </div>
 
-        {% if request.user.role == "EXAM_OFFICER" %}
+        {% if request.user.role == "EXAM_OFFICER" or request.user.role == "DEPT_CONTROLLER" or request.user.role == "INTERNAL_EXAM_CONTROLLER" %}
         <div class="nav-section">
             <div class="nav-label">Academic Setup</div>
             <div class="nav-group open">
@@ -35,10 +36,12 @@
                     <i class="fas fa-chevron-down nav-caret"></i>
                 </div>
                 <div class="nav-submenu" id="academic-setup-menu">
+                    {% if request.user.is_exam_officer %}
                     <a class="nav-subitem{% if '/academics/departments/' in path %} active{% endif %}"
                         href="{% url 'academics:departments' %}">
                         <i class="fas fa-layer-group"></i> Programs
                     </a>
+                    {% endif %}
                     <a class="nav-subitem{% if '/academics/batches/' in path %} active{% endif %}"
                         href="{% url 'academics:batches' %}">
                         <i class="fas fa-calendar-days"></i> Batches
@@ -135,6 +138,36 @@
         </div>
         {% endif %}
 
+        {% if request.user.is_student %}
+        <div class="nav-section">
+            <div class="nav-label">Student</div>
+            <a class="nav-item{% if '/results/' in path %} active{% endif %}"
+                href="{% url 'results:my_results' %}">
+                <i class="fas fa-clipboard-list"></i> Results
+            </a>
+            <a class="nav-item{% if '/transcripts/my/' in path %} active{% endif %}"
+                href="{% url 'transcripts:my_transcript' %}">
+                <i class="fas fa-scroll"></i> Transcript
+            </a>
+        </div>
+        {% endif %}
+
+        {% if request.user.is_exam_officer %}
+        <div class="nav-section">
+            <div class="nav-label">Admin</div>
+            <a class="nav-item{% if '/accounts/permissions/' in path %} active{% endif %}"
+                href="{% url 'accounts:permissions' %}">
+                <i class="fas fa-user-shield"></i> Permissions
+            </a>
+            <a class="nav-item{% if '/accounts/users/' in path %} active{% endif %}"
+                href="{% url 'accounts:users' %}">
+                <i class="fas fa-users-gear"></i> Users
+            </a>
+        </div>
+        {% endif %}
+
+        </div>
+
         <div class="sidebar-footer">
             <div class="user-card">
                 <div class="user-avatar">{{ request.user.username|first|upper }}</div>
@@ -173,7 +206,7 @@
                 </div>
                 {% endfor %}
             </div>
-            {% endif %}
+        {% endif %}
             {% block dashboard_content %}{% endblock %}
         </div>
     </div>

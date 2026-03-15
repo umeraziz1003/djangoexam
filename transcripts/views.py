@@ -37,6 +37,12 @@ def my_transcript_view(request):
 @never_cache
 def transcript_view(request, student_id):
     student = get_object_or_404(Student, pk=student_id)
+    if request.user.is_student():
+        try:
+            if request.user.student_profile.id != student.id:
+                return redirect("accounts:dashboard")
+        except Student.DoesNotExist:
+            return redirect("accounts:dashboard")
     return _render_transcript(request, student)
 
 

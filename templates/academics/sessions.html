@@ -1,4 +1,5 @@
 {% extends "dashboard/layout.html" %}
+{% load permissions_tags %}
 
 {% block title %}Sessions — Result Management System{% endblock %}
 {% block topbar_display %}Sessions{% endblock %}
@@ -115,6 +116,8 @@
                                     aria-expanded="false" aria-label="Edit {{ session.name }}">
                                     <i class="fas fa-pen"></i>
                                 </button>
+                                {% can request.user.role "SESSIONS" "delete" as can_delete_sessions %}
+                                {% if can_delete_sessions %}
                                 <form method="post" action="{% url 'academics:delete_session' session.pk %}"
                                     class="d-inline"
                                     onsubmit="return confirm('Delete session {{ session.name }}? This cannot be undone.');">
@@ -124,6 +127,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                {% endif %}
                             </td>
                         </tr>
                         <!-- Inline Edit Row -->

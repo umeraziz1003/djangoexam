@@ -34,12 +34,21 @@
     <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="student-courses" data-auto-submit>
         <div class="col-lg-4">
             <label class="form-label">Department</label>
+            {% if request.user.is_exam_officer %}
             <select class="form-select" name="department_id" data-chain="department">
                 <option value="">All Departments</option>
                 {% for d in departments %}
                 <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
                 {% endfor %}
             </select>
+            {% else %}
+            <input type="hidden" name="department_id" value="{{ department_id }}">
+            <select class="form-select" name="department_id" data-chain="department" disabled>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
         </div>
         <div class="col-lg-4">
             <label class="form-label">Batch</label>

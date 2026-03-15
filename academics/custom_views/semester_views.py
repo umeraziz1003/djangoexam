@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 
 from ..forms import SemesterForm
 from ..models import Batch, Department, Semester
+from accounts.permissions import can
 
 
 @login_required(login_url="accounts:login_page")
@@ -15,6 +16,8 @@ def semesters_view(request):
     search = request.GET.get("search", "").strip()
     department_id = request.GET.get("department_id", "")
     batch_id = request.GET.get("batch_id", "")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        department_id = str(request.user.department_id)
     qs = Semester.objects.select_related("batch").order_by("batch", "semester_number")
     if department_id:
         qs = qs.filter(batch__department_id=department_id)
@@ -34,6 +37,8 @@ def semesters_view(request):
     if department_id:
         batches = batches.filter(department_id=department_id)
     departments = Department.objects.filter(is_active=True)
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        departments = departments.filter(id=request.user.department_id)
 
     return render(request, "academics/semesters.html", {
         "semesters": page_obj,
@@ -50,8 +55,13 @@ def semesters_view(request):
 @login_required(login_url="accounts:login_page")
 def create_semester(request):
     if request.method == "POST":
+        if not can(request.user.role, "SEMESTERS", "create"):
+            return redirect("academics:semesters")
         form = SemesterForm(request.POST)
         if form.is_valid():
+            if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+                if form.cleaned_data["batch"].department_id != request.user.department_id:
+                    return redirect("academics:semesters")
             form.save()
             return redirect("academics:semesters")
         qs = Semester.objects.select_related("batch").order_by("batch", "semester_number")
@@ -72,8 +82,13 @@ def create_semester(request):
 def edit_semester(request, pk):
     semester = get_object_or_404(Semester, pk=pk)
     if request.method == "POST":
+        if not can(request.user.role, "SEMESTERS", "update"):
+            return redirect("academics:semesters")
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            if semester.batch.department_id != request.user.department_id:
+                return redirect("academics:semesters")
         batch_id = request.POST.get("batch_id")
-        if batch_id:
+        if batch_id and not (request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id):
             semester.batch_id = batch_id
         try:
             semester.semester_number = int(request.POST.get("semester_number", semester.semester_number))
@@ -88,5 +103,10 @@ def edit_semester(request, pk):
 @require_POST
 def delete_semester(request, pk):
     semester = get_object_or_404(Semester, pk=pk)
+    if not can(request.user.role, "SEMESTERS", "delete"):
+        return redirect("academics:semesters")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if semester.batch.department_id != request.user.department_id:
+            return redirect("academics:semesters")
     semester.delete()
     return redirect("academics:semesters")

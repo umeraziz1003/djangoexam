@@ -7,11 +7,14 @@ from django.views.decorators.http import require_POST
 
 from ..forms import DepartmentForm
 from ..models import Department
+from accounts.permissions import can
 
 
 @login_required(login_url="accounts:login_page")
 @never_cache
 def departments_view(request):
+    if not request.user.is_exam_officer():
+        return redirect("accounts:dashboard")
     search = request.GET.get("search", "").strip()
     qs = Department.objects.all().order_by("name")
     if search:
@@ -32,6 +35,10 @@ def departments_view(request):
 @login_required(login_url="accounts:login_page")
 def create_department(request):
     if request.method == "POST":
+        if not request.user.is_exam_officer():
+            return redirect("accounts:dashboard")
+        if not can(request.user.role, "DEPARTMENTS", "create"):
+            return redirect("academics:departments")
         form = DepartmentForm(request.POST)
         if form.is_valid():
             form.save()
@@ -53,6 +60,10 @@ def create_department(request):
 def edit_department(request, pk):
     department = get_object_or_404(Department, pk=pk)
     if request.method == "POST":
+        if not request.user.is_exam_officer():
+            return redirect("accounts:dashboard")
+        if not can(request.user.role, "DEPARTMENTS", "update"):
+            return redirect("academics:departments")
         department.name = request.POST.get("name", department.name).strip()
         department.code = request.POST.get("code", department.code).strip()
         try:
@@ -68,5 +79,9 @@ def edit_department(request, pk):
 @require_POST
 def delete_department(request, pk):
     department = get_object_or_404(Department, pk=pk)
+    if not request.user.is_exam_officer():
+        return redirect("accounts:dashboard")
+    if not can(request.user.role, "DEPARTMENTS", "delete"):
+        return redirect("academics:departments")
     department.delete()
     return redirect("academics:departments")

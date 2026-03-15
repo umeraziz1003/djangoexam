@@ -69,6 +69,12 @@ body.rms-body {
     overflow: hidden;
 }
 
+.sidebar-nav {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 12px;
+}
+
 .sidebar::before {
     content: "";
     position: absolute;

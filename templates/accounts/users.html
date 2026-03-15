@@ -1,0 +1,110 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Users — Result Management System{% endblock %}
+{% block topbar_display %}Users{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Users</h2>
+    <p>Manage system users and their roles.</p>
+</div>
+
+<div class="rms-card">
+    <div class="rms-section-title">
+        <h5>User List</h5>
+        <a class="btn btn-primary btn-sm" href="{% url 'accounts:create_user' %}">
+            <i class="fas fa-plus"></i> Add User
+        </a>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-lg-4">
+            <label class="form-label">Role</label>
+            <select class="form-select" name="role">
+                <option value="">All Roles</option>
+                {% for value, label in users.model.ROLE_CHOICES %}
+                <option value="{{ value }}" {% if role == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Department</label>
+            <select class="form-select" name="department_id">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" name="search" placeholder="Username…" value="{{ search }}">
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+        {% if role or department_id or search %}
+        <div class="col-lg-2 d-grid">
+            <a class="btn btn-ghost" href="{% url 'accounts:users' %}">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-500">{{ u.username }}</td>
+                    <td>{{ u.get_role_display }}</td>
+                    <td>{{ u.department|default:"—" }}</td>
+                    <td>
+                        {% if u.is_locked %}
+                        <span class="chip red">Locked</span>
+                        {% else %}
+                        <span class="chip green">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'accounts:edit_user' u.pk %}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:reset_user_password' u.pk %}">
+                            <i class="fas fa-key"></i>
+                        </a>
+                        <form method="post" action="{% url 'accounts:toggle_user_lock' u.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-warning" type="submit">
+                                {% if u.is_locked %}<i class="fas fa-lock-open"></i>{% else %}<i class="fas fa-lock"></i>{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="rms-empty">
+                            <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                            <p>No users found.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -24,12 +24,13 @@ SECRET_KEY = 'django-insecure-+=(#-1tpvy#e4s$_f671_gp8c500ufv2w)g0hpib7oxzlso^fg
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = 'accounts.User'  # Using default User model for simplicity
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.ngrok-free.app"
+]
 # Application definition
 
 INSTALLED_APPS = [

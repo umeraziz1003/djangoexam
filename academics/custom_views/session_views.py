@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 
 from ..forms import SessionForm
 from ..models import Session
+from accounts.permissions import can
 
 
 @login_required(login_url="accounts:login_page")
@@ -38,6 +39,8 @@ def sessions_view(request):
 @login_required(login_url="accounts:login_page")
 def create_session(request):
     if request.method == "POST":
+        if not can(request.user.role, "SESSIONS", "create"):
+            return redirect("academics:sessions")
         form = SessionForm(request.POST)
         if form.is_valid():
             form.save()
@@ -58,6 +61,8 @@ def create_session(request):
 def edit_session(request, pk):
     session = get_object_or_404(Session, pk=pk)
     if request.method == "POST":
+        if not can(request.user.role, "SESSIONS", "update"):
+            return redirect("academics:sessions")
         session.name = request.POST.get("name", session.name).strip()
         session.start_date = request.POST.get("start_date", session.start_date)
         session.end_date = request.POST.get("end_date", session.end_date)
@@ -70,5 +75,7 @@ def edit_session(request, pk):
 @require_POST
 def delete_session(request, pk):
     session = get_object_or_404(Session, pk=pk)
+    if not can(request.user.role, "SESSIONS", "delete"):
+        return redirect("academics:sessions")
     session.delete()
     return redirect("academics:sessions")

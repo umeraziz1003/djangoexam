@@ -11,6 +11,13 @@ from academics.models import Department, Semester, Session, Batch
 from courses.models import CourseOffering
 from .forms import EnrollmentForm
 from .models import Enrollment
+from accounts.permissions import can
+
+
+def _dept_restrict(request, qs, field_path):
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        return qs.filter(**{field_path: request.user.department_id})
+    return qs
 
 
 @login_required(login_url="accounts:login_page")
@@ -29,6 +36,7 @@ def enrollments_view(request):
         "course_offering__semester",
         "course_offering__session",
     ).order_by("-date_enrolled")
+    qs = _dept_restrict(request, qs, "course_offering__course__department_id")
 
     if student_id:
         qs = qs.filter(student_id=student_id)
@@ -50,12 +58,12 @@ def enrollments_view(request):
     context = {
         "enrollments": page_obj,
         "page_obj": page_obj,
-        "students": Student.objects.filter(is_active=True).order_by("roll_no"),
-        "offerings": CourseOffering.objects.select_related(
+        "students": _dept_restrict(request, Student.objects.filter(is_active=True).order_by("roll_no"), "batch__department_id"),
+        "offerings": _dept_restrict(request, CourseOffering.objects.select_related(
             "course",
             "semester",
             "session",
-        ).order_by("course__course_code"),
+        ).order_by("course__course_code"), "course__department_id"),
         "search": search,
         "student_id": student_id,
         "offering_id": offering_id,
@@ -67,7 +75,12 @@ def enrollments_view(request):
 @never_cache
 def create_enrollment(request):
     if request.method == "POST":
+        if not can(request.user.role, "ENROLLMENTS", "create"):
+            return redirect("enrollments:enrollments")
         form = EnrollmentForm(request.POST)
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            form.fields["student"].queryset = form.fields["student"].queryset.filter(batch__department_id=request.user.department_id)
+            form.fields["course_offering"].queryset = form.fields["course_offering"].queryset.filter(course__department_id=request.user.department_id)
         if form.is_valid():
             try:
                 form.save()
@@ -76,6 +89,9 @@ def create_enrollment(request):
                 form.add_error(None, "This student is already enrolled in the selected course offering.")
     else:
         form = EnrollmentForm()
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            form.fields["student"].queryset = form.fields["student"].queryset.filter(batch__department_id=request.user.department_id)
+            form.fields["course_offering"].queryset = form.fields["course_offering"].queryset.filter(course__department_id=request.user.department_id)
 
     return render(request, "enrollments/create_enrollment.html", {"form": form})
 
@@ -85,7 +101,12 @@ def create_enrollment(request):
 def edit_enrollment(request, pk):
     enrollment = get_object_or_404(Enrollment, pk=pk)
     if request.method == "POST":
+        if not can(request.user.role, "ENROLLMENTS", "update"):
+            return redirect("enrollments:enrollments")
         form = EnrollmentForm(request.POST, instance=enrollment)
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            form.fields["student"].queryset = form.fields["student"].queryset.filter(batch__department_id=request.user.department_id)
+            form.fields["course_offering"].queryset = form.fields["course_offering"].queryset.filter(course__department_id=request.user.department_id)
         if form.is_valid():
             try:
                 form.save()
@@ -94,6 +115,9 @@ def edit_enrollment(request, pk):
                 form.add_error(None, "This student is already enrolled in the selected course offering.")
     else:
         form = EnrollmentForm(instance=enrollment)
+        if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+            form.fields["student"].queryset = form.fields["student"].queryset.filter(batch__department_id=request.user.department_id)
+            form.fields["course_offering"].queryset = form.fields["course_offering"].queryset.filter(course__department_id=request.user.department_id)
 
     return render(request, "enrollments/edit_enrollment.html", {
         "form": form,
@@ -105,6 +129,8 @@ def edit_enrollment(request, pk):
 @never_cache
 def delete_enrollment(request, pk):
     enrollment = get_object_or_404(Enrollment, pk=pk)
+    if not can(request.user.role, "ENROLLMENTS", "delete"):
+        return redirect("enrollments:enrollments")
     if request.method == "POST":
         enrollment.delete()
         return redirect("enrollments:enrollments")
@@ -117,9 +143,14 @@ def semester_courses_view(request):
     department_id = request.GET.get("department_id", "")
     batch_id = request.GET.get("batch_id", "")
     semester_id = request.GET.get("semester_id", "")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if not department_id:
+            department_id = str(request.user.department_id)
 
     batches = Batch.objects.all()
     semesters = Semester.objects.select_related("batch").all()
+    batches = _dept_restrict(request, batches, "department_id")
+    semesters = _dept_restrict(request, semesters, "batch__department_id")
     if department_id:
         batches = batches.filter(department_id=department_id)
         semesters = semesters.filter(batch__department_id=department_id)
@@ -133,6 +164,7 @@ def semester_courses_view(request):
         "course__department",
         "semester__batch",
     ).order_by("course__course_code")
+    offerings = _dept_restrict(request, offerings, "course__department_id")
     if department_id:
         offerings = offerings.filter(course__department_id=department_id)
     if batch_id:
@@ -148,7 +180,7 @@ def semester_courses_view(request):
         })
 
     return render(request, "enrollments/semester_courses.html", {
-        "departments": Department.objects.filter(is_active=True).order_by("name"),
+        "departments": _dept_restrict(request, Department.objects.filter(is_active=True).order_by("name"), "id"),
         "batches": batches.order_by("start_date"),
         "semesters": semesters.order_by("semester_number"),
         "department_id": department_id,
@@ -166,10 +198,14 @@ def course_students_view(request):
     semester_id = request.GET.get("semester_id", "")
     session_id = request.GET.get("session_id", "")
     offering_id = request.GET.get("offering_id", "")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if not department_id:
+            department_id = str(request.user.department_id)
 
     offerings = CourseOffering.objects.select_related(
         "course", "session", "semester", "semester__batch", "course__department"
     ).order_by("course__course_code")
+    offerings = _dept_restrict(request, offerings, "course__department_id")
     if department_id:
         offerings = offerings.filter(course__department_id=department_id)
     if batch_id:
@@ -187,6 +223,7 @@ def course_students_view(request):
         "course_offering__semester",
         "course_offering__session",
     ).order_by("student__roll_no")
+    enrollments_qs = _dept_restrict(request, enrollments_qs, "course_offering__course__department_id")
 
     if department_id:
         enrollments_qs = enrollments_qs.filter(course_offering__course__department_id=department_id)
@@ -209,9 +246,9 @@ def course_students_view(request):
         enrollments.append(e)
 
     return render(request, "enrollments/course_students.html", {
-        "departments": Department.objects.filter(is_active=True).order_by("name"),
-        "batches": Batch.objects.all().order_by("start_date"),
-        "semesters": Semester.objects.select_related("batch").all().order_by("semester_number"),
+        "departments": _dept_restrict(request, Department.objects.filter(is_active=True).order_by("name"), "id"),
+        "batches": _dept_restrict(request, Batch.objects.all().order_by("start_date"), "department_id"),
+        "semesters": _dept_restrict(request, Semester.objects.select_related("batch").all().order_by("semester_number"), "batch__department_id"),
         "sessions": Session.objects.order_by("-start_date"),
         "department_id": department_id,
         "batch_id": batch_id,
@@ -229,7 +266,11 @@ def student_courses_view(request):
     department_id = request.GET.get("department_id", "")
     batch_id = request.GET.get("batch_id", "")
     student_id = request.GET.get("student_id", "")
+    if request.user.role in ("DEPT_CONTROLLER", "INTERNAL_EXAM_CONTROLLER") and request.user.department_id:
+        if not department_id:
+            department_id = str(request.user.department_id)
     students = Student.objects.filter(is_active=True).order_by("roll_no")
+    students = _dept_restrict(request, students, "batch__department_id")
     if department_id:
         students = students.filter(batch__department_id=department_id)
     if batch_id:
@@ -242,6 +283,7 @@ def student_courses_view(request):
         "student",
         "student__batch",
     ).order_by("student__roll_no", "course_offering__course__course_code")
+    enrollments_qs = _dept_restrict(request, enrollments_qs, "student__batch__department_id")
 
     if department_id:
         enrollments_qs = enrollments_qs.filter(student__batch__department_id=department_id)
@@ -251,8 +293,8 @@ def student_courses_view(request):
         enrollments_qs = enrollments_qs.filter(student_id=student_id)
 
     return render(request, "enrollments/student_courses.html", {
-        "departments": Department.objects.filter(is_active=True).order_by("name"),
-        "batches": Batch.objects.all().order_by("start_date"),
+        "departments": _dept_restrict(request, Department.objects.filter(is_active=True).order_by("name"), "id"),
+        "batches": _dept_restrict(request, Batch.objects.all().order_by("start_date"), "department_id"),
         "department_id": department_id,
         "batch_id": batch_id,
         "students": students,
@@ -265,6 +307,7 @@ def student_courses_view(request):
 def ajax_batches(request):
     department_id = request.GET.get("department_id")
     qs = Batch.objects.all().order_by("start_date")
+    qs = _dept_restrict(request, qs, "department_id")
     if department_id:
         qs = qs.filter(department_id=department_id)
     data = [{"id": b.id, "label": str(b)} for b in qs]
@@ -275,6 +318,7 @@ def ajax_batches(request):
 def ajax_semesters(request):
     batch_id = request.GET.get("batch_id")
     qs = Semester.objects.select_related("batch").all().order_by("semester_number")
+    qs = _dept_restrict(request, qs, "batch__department_id")
     if batch_id:
         qs = qs.filter(batch_id=batch_id)
     data = [{"id": s.id, "label": str(s)} for s in qs]
@@ -286,6 +330,7 @@ def ajax_students(request):
     department_id = request.GET.get("department_id")
     batch_id = request.GET.get("batch_id")
     qs = Student.objects.filter(is_active=True).order_by("roll_no")
+    qs = _dept_restrict(request, qs, "batch__department_id")
     if department_id:
         qs = qs.filter(batch__department_id=department_id)
     if batch_id:
@@ -302,6 +347,7 @@ def ajax_offerings(request):
     session_id = request.GET.get("session_id")
 
     qs = CourseOffering.objects.select_related("course", "session", "semester").order_by("course__course_code")
+    qs = _dept_restrict(request, qs, "course__department_id")
     if department_id:
         qs = qs.filter(course__department_id=department_id)
     if batch_id:

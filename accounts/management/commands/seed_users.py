@@ -25,6 +25,7 @@ class Command(BaseCommand):
         seed = [
             {"username": "exam_officer", "role": "EXAM_OFFICER"},
             {"username": "dept_controller", "role": "DEPT_CONTROLLER"},
+            {"username": "internal_exam_controller", "role": "INTERNAL_EXAM_CONTROLLER"},
             {"username": "student_user", "role": "STUDENT"},
         ]
 
