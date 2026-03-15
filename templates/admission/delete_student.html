@@ -1,0 +1,33 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Delete Student — Result Management System{% endblock %}
+{% block topbar_display %}Delete Student{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Delete Student</h2>
+    <p>Deactivate a student record.</p>
+</div>
+
+<div class="rms-card" style="max-width: 720px;">
+    <div class="section-head">
+        <h3><i class="fas fa-triangle-exclamation me-2"></i>Confirm Deactivation</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'admission:students' %}">
+            <i class="fas fa-arrow-left"></i> Back to Students
+        </a>
+    </div>
+
+    <p class="mb-4">
+        Are you sure you want to deactivate <strong>{{ student.full_name }}</strong>
+        ({{ student.roll_no }})? This can be reversed later by reactivating the student.
+    </p>
+
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+            <i class="fas fa-trash"></i> Deactivate
+        </button>
+        <a class="btn btn-ghost" href="{% url 'admission:students' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

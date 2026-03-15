@@ -1,0 +1,184 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Course Offerings — Result Management System{% endblock %}
+{% block topbar_display %}Course Offerings{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Course Offerings</h2>
+    <p>Create and manage offerings per semester and session.</p>
+</div>
+
+<div class="row g-3">
+    <!-- Create Form -->
+    <div class="col-lg-4">
+        <div class="rms-card">
+            <div class="section-head">
+                <h3><i class="fas fa-plus-circle me-2"></i>Add Offering</h3>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_offering">
+                <div class="mb-3">
+                    <label class="form-label">Course *</label>
+                    <select title="Course" class="form-select" name="course_id" required>
+                        <option value="">Select Course</option>
+                        {% for c in courses %}
+                        <option value="{{ c.id }}">{{ c.course_code }} — {{ c.course_title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Semester *</label>
+                    <select title="Semester" class="form-select" name="semester_id" required>
+                        <option value="">Select Semester</option>
+                        {% for s in semesters %}
+                        <option value="{{ s.id }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Session *</label>
+                    <select title="Session" class="form-select" name="session_id" required>
+                        <option value="">Select Session</option>
+                        {% for s in sessions %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Instructor Name *</label>
+                    <input type="text" class="form-control" name="instructor_name" placeholder="e.g. Dr. Ayesha Khan" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Add Offering
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List -->
+    <div class="col-lg-8">
+        <div class="rms-card">
+            <div class="rms-section-title">
+                <h5>Offerings</h5>
+                <span class="badge-soft rms-muted">{{ page_obj.paginator.count }} total</span>
+            </div>
+
+            <!-- Filters -->
+            <form method="get" class="row g-2 align-items-end mb-3">
+                <div class="col-lg-4">
+                    <label class="form-label">Session</label>
+                    <select title="Session" class="form-select" name="session_id">
+                        <option value="">All Sessions</option>
+                        {% for s in sessions %}
+                        <option value="{{ s.id }}" {% if session_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label">Semester</label>
+                    <select title="Semester" class="form-select" name="semester_id">
+                        <option value="">All Semesters</option>
+                        {% for s in semesters %}
+                        <option value="{{ s.id }}" {% if semester_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" placeholder="Course or instructor…" value="{{ search }}">
+                </div>
+                <div class="col-lg-1 d-grid">
+                    <button type="submit" class="btn btn-outline-primary" aria-label="Filter offerings">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+                {% if session_id or semester_id or search %}
+                <div class="col-lg-12">
+                    <a href="{% url 'courses:course_offerings' %}" class="btn btn-ghost">Clear</a>
+                </div>
+                {% endif %}
+            </form>
+
+            <div class="rms-table-wrap">
+                <table class="table table-sm align-middle rms-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Course</th>
+                            <th>Program</th>
+                            <th>Semester</th>
+                            <th>Session</th>
+                            <th>Instructor</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in offerings %}
+                        <tr>
+                            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                            <td>
+                                <div class="fw-500">{{ o.course.course_title }}</div>
+                                <div class="rms-muted"><code>{{ o.course.course_code }}</code></div>
+                            </td>
+                            <td><span class="chip blue">{{ o.course.department.name }}</span></td>
+                            <td>{{ o.semester }}</td>
+                            <td>{{ o.session.name }}</td>
+                            <td>{{ o.instructor_name }}</td>
+                            <td class="text-end">
+                                <form method="post" class="d-inline"
+                                    onsubmit="return confirm('Delete offering {{ o.course.course_code }} for {{ o.session.name }}?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_offering">
+                                    <input type="hidden" name="offering_id" value="{{ o.id }}">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Delete offering">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="rms-empty">
+                                    <i class="fas fa-book-open fa-2x mb-2 d-block"></i>
+                                    <p>No offerings found{% if search or session_id or semester_id %} for the current filters{% endif %}.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav class="mt-3" aria-label="Offerings pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

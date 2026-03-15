@@ -1,0 +1,76 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Add Course — Result Management System{% endblock %}
+{% block topbar_display %}Add Course{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Add Course</h2>
+    <p>Create a new course for a department program.</p>
+</div>
+
+<div class="rms-card" style="max-width: 900px;">
+    <div class="section-head">
+        <h3><i class="fas fa-plus-circle me-2"></i>Course Details</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'courses:courses' %}">
+            <i class="fas fa-arrow-left"></i> Back to Courses
+        </a>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.department.id_for_label }}">{{ form.department.label }} *</label>
+            {{ form.department }}
+            {% for error in form.department.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.course_code.id_for_label }}">{{ form.course_code.label }} *</label>
+            {{ form.course_code }}
+            {% for error in form.course_code.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-8">
+            <label class="form-label" for="{{ form.course_title.id_for_label }}">{{ form.course_title.label }} *</label>
+            {{ form.course_title }}
+            {% for error in form.course_title.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.credit_hours.id_for_label }}">{{ form.credit_hours.label }} *</label>
+            {{ form.credit_hours }}
+            {% for error in form.credit_hours.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.course_type.id_for_label }}">{{ form.course_type.label }}</label>
+            {{ form.course_type }}
+            {% for error in form.course_type.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% for error in form.status.errors %}
+            <div class="form-text text-danger"><i class="fas fa-circle-exclamation me-1"></i>{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Course
+            </button>
+            <a class="btn btn-ghost" href="{% url 'courses:courses' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

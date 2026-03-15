@@ -1,0 +1,43 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Exam Splits — Result Management System{% endblock %}
+{% block topbar_display %}Exam Splits{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Exam Split Configuration</h2>
+    <p>Set the default split for Sessional, Midterm, and Terminal (total must be 100).</p>
+</div>
+
+<div class="rms-card" style="max-width: 720px;">
+    <div class="section-head">
+        <h3><i class="fas fa-sliders me-2"></i>Split Settings</h3>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.sessional_max.id_for_label }}">{{ form.sessional_max.label }}</label>
+            {{ form.sessional_max }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.midterm_max.id_for_label }}">{{ form.midterm_max.label }}</label>
+            {{ form.midterm_max }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.terminal_max.id_for_label }}">{{ form.terminal_max.label }}</label>
+            {{ form.terminal_max }}
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Save Split
+            </button>
+            <div class="badge-soft">Total: {{ total }}</div>
+        </div>
+    </form>
+</div>
+{% endblock %}

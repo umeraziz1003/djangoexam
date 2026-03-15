@@ -1,0 +1,102 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Manage Marks — Result Management System{% endblock %}
+{% block topbar_display %}Manage Marks{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Manage Marks</h2>
+    <p>Enter marks for Sessional, Midterm, and Terminal. Totals are auto-calculated.</p>
+</div>
+
+<div class="rms-card">
+    <div class="rms-section-title">
+        <h5>Course Offering</h5>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-lg-6">
+            <label class="form-label">Select Offering</label>
+            <select class="form-select" name="offering_id">
+                <option value="">Choose course offering</option>
+                {% for o in offerings %}
+                <option value="{{ o.id }}" {% if offering_id == o.id|stringformat:"s" %}selected{% endif %}>
+                    {{ o.course.course_code }} — {{ o.course.course_title }} ({{ o.session.name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Load
+            </button>
+        </div>
+    </form>
+
+    {% if offering_id %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="offering_id" value="{{ offering_id }}">
+
+        <div class="rms-table-wrap">
+            <table class="table table-sm align-middle rms-table mb-0 rms-table-wide">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Roll No</th>
+                        <th>Sessional ({{ splits.sessional_max }})</th>
+                        <th>Midterm ({{ splits.midterm_max }})</th>
+                        <th>Terminal ({{ splits.terminal_max }})</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-500">{{ r.enrollment.student.full_name }}</td>
+                        <td><code>{{ r.enrollment.student.roll_no }}</code></td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="{{ splits.sessional_max }}"
+                                class="form-control form-control-sm"
+                                name="sessional_{{ r.enrollment.id }}"
+                                value="{{ r.sessional }}">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="{{ splits.midterm_max }}"
+                                class="form-control form-control-sm"
+                                name="midterm_{{ r.enrollment.id }}"
+                                value="{{ r.midterm }}">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="{{ splits.terminal_max }}"
+                                class="form-control form-control-sm"
+                                name="terminal_{{ r.enrollment.id }}"
+                                value="{{ r.terminal }}">
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="rms-empty">
+                                <i class="fas fa-user-check fa-2x mb-2 d-block"></i>
+                                <p>No enrollments found for this offering.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if enrollments %}
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Save Marks
+            </button>
+        </div>
+        {% endif %}
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

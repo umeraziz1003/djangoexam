@@ -1,0 +1,161 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Dashboard — Result Management System{% endblock %}
+{% block topbar_display %}Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Dashboard</h2>
+    <p>Welcome back, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>.</p>
+</div>
+
+{% if is_exam_officer %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="rms-stat-card">
+            <div class="rms-stat-icon blue">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div>
+                <div class="rms-stat-value">{{ dept_count }}</div>
+                <div class="rms-stat-label">Active Programs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="rms-stat-card">
+            <div class="rms-stat-icon green">
+                <i class="fas fa-calendar-days"></i>
+            </div>
+            <div>
+                <div class="rms-stat-value">{{ batch_count }}</div>
+                <div class="rms-stat-label">Active Batches</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="rms-stat-card">
+            <div class="rms-stat-icon purple">
+                <i class="fas fa-clock-rotate-left"></i>
+            </div>
+            <div>
+                <div class="rms-stat-value">{{ session_count }}</div>
+                <div class="rms-stat-label">Active Sessions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="rms-stat-card">
+            <div class="rms-stat-icon gold">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div>
+                <div class="rms-stat-value">{{ student_count }}</div>
+                <div class="rms-stat-label">Active Students</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="rms-card">
+    <div class="section-head">
+        <h3>Quick Actions</h3>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'academics:departments' %}" class="btn btn-outline-primary">
+            <i class="fas fa-layer-group"></i> Manage Programs
+        </a>
+        <a href="{% url 'academics:batches' %}" class="btn btn-outline-primary">
+            <i class="fas fa-calendar-days"></i> Manage Batches
+        </a>
+        <a href="{% url 'academics:sessions' %}" class="btn btn-outline-primary">
+            <i class="fas fa-clock-rotate-left"></i> Manage Sessions
+        </a>
+        <a href="{% url 'academics:semesters' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list-ol"></i> Manage Semesters
+        </a>
+        <a href="{% url 'courses:courses' %}" class="btn btn-outline-primary">
+            <i class="fas fa-book"></i> Manage Courses
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if student_profile %}
+<div class="rms-card">
+    <div class="section-head">
+        <h3><i class="fas fa-id-card me-2"></i>My Profile</h3>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="d-flex flex-column gap-2">
+                <div class="badge-soft"><span class="rms-muted me-2">Full Name</span> {{ student_profile.full_name }}</div>
+                <div class="badge-soft"><span class="rms-muted me-2">Father's Name</span> {{ student_profile.father_name }}</div>
+                <div class="badge-soft"><span class="rms-muted me-2">Roll No.</span> <code>{{ student_profile.roll_no }}</code></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex flex-column gap-2">
+                <div class="badge-soft"><span class="rms-muted me-2">Registration No.</span> <code>{{ student_profile.registration_no }}</code></div>
+                <div class="badge-soft"><span class="rms-muted me-2">Batch</span> {{ student_profile.batch }}</div>
+                <div class="badge-soft">
+                    <span class="rms-muted me-2">Status</span>
+                    {% if student_profile.is_active %}
+                    <span class="chip green">Active</span>
+                    {% else %}
+                    <span class="chip red">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="rms-card mt-3">
+    <div class="section-head">
+        <h3><i class="fas fa-clipboard-list me-2"></i>My Results</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'transcripts:my_transcript' %}">
+            <i class="fas fa-scroll"></i> View Transcript
+        </a>
+    </div>
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Course</th>
+                    <th>Session</th>
+                    <th>Total</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in student_results %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="fw-500">{{ r.enrollment.course_offering.course.course_title }}</div>
+                        <div class="rms-muted"><code>{{ r.enrollment.course_offering.course.course_code }}</code></div>
+                    </td>
+                    <td>{{ r.enrollment.course_offering.session.name }}</td>
+                    <td>{{ r.total_marks }}</td>
+                    <td>{{ r.grade }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="rms-empty">
+                            <i class="fas fa-clipboard-list fa-2x mb-2 d-block"></i>
+                            <p>No published results yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

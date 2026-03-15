@@ -1,0 +1,60 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Exam Rules — Result Management System{% endblock %}
+{% block topbar_display %}Exam Rules{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Exam Rules</h2>
+    <p>Configure probation, dropout, and improvement eligibility rules.</p>
+</div>
+
+<div class="rms-card" style="max-width: 900px;">
+    <div class="section-head">
+        <h3><i class="fas fa-clipboard-check me-2"></i>Rules Configuration</h3>
+    </div>
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.min_cgpa_dropout.id_for_label }}">{{ form.min_cgpa_dropout.label }}</label>
+            {{ form.min_cgpa_dropout }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.min_cgpa_probation.id_for_label }}">{{ form.min_cgpa_probation.label }}</label>
+            {{ form.min_cgpa_probation }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.max_probations_allowed.id_for_label }}">{{ form.max_probations_allowed.label }}</label>
+            {{ form.max_probations_allowed }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.failed_marks_threshold.id_for_label }}">{{ form.failed_marks_threshold.label }}</label>
+            {{ form.failed_marks_threshold }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.improvement_min.id_for_label }}">{{ form.improvement_min.label }}</label>
+            {{ form.improvement_min }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.improvement_max.id_for_label }}">{{ form.improvement_max.label }}</label>
+            {{ form.improvement_max }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.no_drop_after_semester.id_for_label }}">{{ form.no_drop_after_semester.label }}</label>
+            {{ form.no_drop_after_semester }}
+        </div>
+        <div class="col-md-6 pt-4">
+            <div class="form-check">
+                {{ form.can_drop }}
+                <label class="form-check-label" for="{{ form.can_drop.id_for_label }}">{{ form.can_drop.label }}</label>
+            </div>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Save Rules
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

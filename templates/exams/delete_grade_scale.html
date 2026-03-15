@@ -1,0 +1,33 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Delete Grade Scale — Result Management System{% endblock %}
+{% block topbar_display %}Delete Grade Scale{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Delete Grade Scale</h2>
+    <p>Remove a grade scale entry.</p>
+</div>
+
+<div class="rms-card" style="max-width: 680px;">
+    <div class="section-head">
+        <h3><i class="fas fa-triangle-exclamation me-2"></i>Confirm Delete</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'exams:grading_system' %}">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <p class="mb-4">
+        Are you sure you want to delete grade <strong>{{ scale.grade }}</strong>
+        ({{ scale.min_percentage }} - {{ scale.max_percentage }})?
+    </p>
+
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+        <a class="btn btn-ghost" href="{% url 'exams:grading_system' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

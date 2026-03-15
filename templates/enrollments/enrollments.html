@@ -1,0 +1,142 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Enrollments — Result Management System{% endblock %}
+{% block topbar_display %}Enrollments{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Enrollments</h2>
+    <p>Manage student enrollments across course offerings.</p>
+</div>
+
+<div class="rms-card">
+    <div class="rms-section-title">
+        <h5>Enrollment List</h5>
+        <div class="d-flex gap-2">
+            <a class="btn btn-primary btn-sm" href="{% url 'enrollments:create_enrollment' %}">
+                <i class="fas fa-plus"></i> Add Enrollment
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-lg-4">
+            <label class="form-label">Student</label>
+            <select class="form-select" name="student_id">
+                <option value="">All Students</option>
+                {% for s in students %}
+                <option value="{{ s.id }}" {% if student_id == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.roll_no }} — {{ s.full_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Course Offering</label>
+            <select class="form-select" name="offering_id">
+                <option value="">All Offerings</option>
+                {% for o in offerings %}
+                <option value="{{ o.id }}" {% if offering_id == o.id|stringformat:"s" %}selected{% endif %}>
+                    {{ o.course.course_code }} — {{ o.course.course_title }} ({{ o.session.name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" name="search" placeholder="Student or course…"
+                value="{{ search }}">
+        </div>
+        <div class="col-lg-1 d-grid">
+            <button class="btn btn-outline-primary" aria-label="Filter enrollments">
+                <i class="fas fa-filter"></i>
+            </button>
+        </div>
+        {% if student_id or offering_id or search %}
+        <div class="col-lg-12">
+            <a href="{% url 'enrollments:enrollments' %}" class="btn btn-ghost">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Offering</th>
+                    <th>Enrolled</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enrollments %}
+                <tr>
+                    <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td>
+                        <div class="fw-500">{{ e.student.full_name }}</div>
+                        <div class="rms-muted"><code>{{ e.student.roll_no }}</code></div>
+                    </td>
+                    <td>
+                        <div class="fw-500">{{ e.course_offering.course.course_title }}</div>
+                        <div class="rms-muted"><code>{{ e.course_offering.course.course_code }}</code></div>
+                    </td>
+                    <td>
+                        <div>{{ e.course_offering.semester }}</div>
+                        <div class="rms-muted">{{ e.course_offering.session.name }}</div>
+                    </td>
+                    <td>{{ e.date_enrolled }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'enrollments:edit_enrollment' e.pk %}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a class="btn btn-sm btn-outline-danger" href="{% url 'enrollments:delete_enrollment' e.pk %}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="rms-empty">
+                            <i class="fas fa-user-check fa-2x mb-2 d-block"></i>
+                            <p>No enrollments found{% if search or student_id or offering_id %} for the current filters{% endif %}.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3" aria-label="Enrollments pagination">
+        <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if student_id %}&student_id={{ student_id }}{% endif %}{% if offering_id %}&offering_id={{ offering_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if student_id %}&student_id={{ student_id }}{% endif %}{% if offering_id %}&offering_id={{ offering_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if student_id %}&student_id={{ student_id }}{% endif %}{% if offering_id %}&offering_id={{ offering_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

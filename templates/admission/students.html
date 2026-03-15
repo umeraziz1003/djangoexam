@@ -1,0 +1,75 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Students — Result Management System{% endblock %}
+{% block topbar_display %}Students{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Students</h2>
+    <p>Manage student records and enrollment details.</p>
+</div>
+
+<div class="rms-card">
+    <div class="rms-section-title">
+        <h5>Student List</h5>
+        <div class="d-flex gap-2">
+            <a class="btn btn-primary btn-sm" href="{% url 'admission:create_student' %}">
+                <i class="fas fa-plus"></i> Add Student
+            </a>
+        </div>
+    </div>
+
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Roll No</th>
+                    <th>Student</th>
+                    <th>Father</th>
+                    <th>Batch</th>
+                    <th>CNIC</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><code>{{ s.roll_no }}</code></td>
+                    <td class="fw-500">{{ s.full_name }}</td>
+                    <td>{{ s.father_name }}</td>
+                    <td>{{ s.batch }}</td>
+                    <td>{{ s.cnic }}</td>
+                    <td>
+                        {% if s.is_active %}
+                        <span class="chip green">Active</span>
+                        {% else %}
+                        <span class="chip red">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'admission:edit_student' s.pk %}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a class="btn btn-sm btn-outline-danger" href="{% url 'admission:delete_student' s.pk %}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="rms-empty">
+                            <i class="fas fa-user-graduate fa-2x mb-2 d-block"></i>
+                            <p>No students found.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Grading System — Result Management System{% endblock %}
+{% block topbar_display %}Grading System{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Grading System</h2>
+    <p>Define grade thresholds used to calculate final grades.</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="rms-card">
+            <div class="section-head">
+                <h3><i class="fas fa-plus-circle me-2"></i>Add Grade Scale</h3>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.min_percentage.id_for_label }}">{{ form.min_percentage.label }}</label>
+                    {{ form.min_percentage }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.max_percentage.id_for_label }}">{{ form.max_percentage.label }}</label>
+                    {{ form.max_percentage }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.grade.id_for_label }}">{{ form.grade.label }}</label>
+                    {{ form.grade }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.grade_point.id_for_label }}">{{ form.grade_point.label }}</label>
+                    {{ form.grade_point }}
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="rms-card">
+            <div class="rms-section-title">
+                <h5>Grade Scales</h5>
+            </div>
+            <div class="rms-table-wrap">
+                <table class="table table-sm align-middle rms-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Range</th>
+                            <th>Grade</th>
+                            <th>Points</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in scales %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ g.min_percentage }} - {{ g.max_percentage }}</td>
+                            <td><span class="chip blue">{{ g.grade }}</span></td>
+                            <td>{{ g.grade_point }}</td>
+                            <td>
+                                {% if g.is_active %}
+                                <span class="chip green">Active</span>
+                                {% else %}
+                                <span class="chip red">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'exams:edit_grade_scale' g.pk %}">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-danger" href="{% url 'exams:delete_grade_scale' g.pk %}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="rms-empty">
+                                    <i class="fas fa-scale-balanced fa-2x mb-2 d-block"></i>
+                                    <p>No grade scales defined.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

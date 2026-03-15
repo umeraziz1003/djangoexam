@@ -1,0 +1,35 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Delete Enrollment — Result Management System{% endblock %}
+{% block topbar_display %}Delete Enrollment{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Delete Enrollment</h2>
+    <p>Remove a student from a course offering.</p>
+</div>
+
+<div class="rms-card" style="max-width: 720px;">
+    <div class="section-head">
+        <h3><i class="fas fa-triangle-exclamation me-2"></i>Confirm Deletion</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'enrollments:enrollments' %}">
+            <i class="fas fa-arrow-left"></i> Back to Enrollments
+        </a>
+    </div>
+
+    <p class="mb-4">
+        Are you sure you want to delete the enrollment for
+        <strong>{{ enrollment.student.full_name }}</strong>
+        in <strong>{{ enrollment.course_offering.course.course_code }}</strong>
+        ({{ enrollment.course_offering.session.name }})?
+    </p>
+
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+        <a class="btn btn-ghost" href="{% url 'enrollments:enrollments' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

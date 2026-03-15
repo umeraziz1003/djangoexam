@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — Result Management System{% endblock %}
+
+{% block content %}
+<div class="rms-auth-bg">
+    <div class="rms-login-card">
+        <div class="rms-login-logo">
+            <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div>
+                <div class="logo-text">RMS<span>Core</span></div>
+                <div class="logo-sub">Result Management</div>
+            </div>
+        </div>
+
+        <h1 class="rms-login-title">Welcome back</h1>
+        <p class="rms-login-sub mb-4">Sign in to your account to continue.</p>
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+            <i class="fas fa-circle-exclamation"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label" for="username">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user text-muted"></i></span>
+                    <input type="text" class="form-control" id="username" name="username"
+                        placeholder="Enter your username" required autofocus>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock text-muted"></i></span>
+                    <input type="password" class="form-control" id="password" name="password"
+                        placeholder="Enter your password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-right-to-bracket"></i> Sign In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

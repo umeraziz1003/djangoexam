@@ -1,0 +1,50 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Edit Grade Scale — Result Management System{% endblock %}
+{% block topbar_display %}Edit Grade Scale{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Edit Grade Scale</h2>
+    <p>Update grade thresholds and points.</p>
+</div>
+
+<div class="rms-card" style="max-width: 720px;">
+    <div class="section-head">
+        <h3><i class="fas fa-pen me-2"></i>Grade Scale</h3>
+        <a class="btn btn-ghost btn-sm" href="{% url 'exams:grading_system' %}">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.min_percentage.id_for_label }}">{{ form.min_percentage.label }}</label>
+            {{ form.min_percentage }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.max_percentage.id_for_label }}">{{ form.max_percentage.label }}</label>
+            {{ form.max_percentage }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.grade.id_for_label }}">{{ form.grade.label }}</label>
+            {{ form.grade }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.grade_point.id_for_label }}">{{ form.grade_point.label }}</label>
+            {{ form.grade_point }}
+        </div>
+        <div class="col-12 form-check">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Save
+            </button>
+            <a class="btn btn-ghost" href="{% url 'exams:grading_system' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
