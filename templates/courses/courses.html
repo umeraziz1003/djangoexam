@@ -100,7 +100,7 @@
                             aria-expanded="false" aria-label="Edit {{ c.course_title }}">
                             <i class="fas fa-pen"></i>
                         </button>
-                        {% can request.user.role "COURSES" "delete" as can_delete_courses %}
+                        {% can request.user "COURSES" "delete" as can_delete_courses %}
                         {% if can_delete_courses %}
                         <form method="post" class="d-inline"
                             onsubmit="return confirm('Delete course {{ c.course_code }}?');">

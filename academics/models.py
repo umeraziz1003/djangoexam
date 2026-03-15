@@ -47,6 +47,16 @@ class Session(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_active = models.BooleanField(default=True)
+    departments = models.ManyToManyField(
+        Department,
+        related_name="sessions",
+        blank=True,
+    )
+    batches = models.ManyToManyField(
+        Batch,
+        related_name="sessions",
+        blank=True,
+    )
 
     def __str__(self):
         return self.name

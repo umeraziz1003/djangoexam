@@ -20,6 +20,83 @@
         </div>
     </div>
 
+    <div class="rms-card mb-3">
+        <div class="section-head">
+            <h3><i class="fas fa-layer-group me-2"></i>Bulk Enroll Batch to Offering</h3>
+        </div>
+        <form method="post" data-chain-group="bulk-enroll">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="bulk_add_batch">
+            <div class="row g-2 align-items-end">
+                <div class="col-lg-3">
+                    <label class="form-label">Department *</label>
+                    {% if request.user.is_exam_officer %}
+                    <select class="form-select" name="department_id" data-chain="department" required>
+                        <option value="">Select Department</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="hidden" name="department_id" value="{{ request.user.department_id }}">
+                    <select class="form-select" name="department_id" data-chain="department" disabled>
+                        {% for d in departments %}
+                        {% if d.id == request.user.department_id %}
+                        <option value="{{ d.id }}" selected>{{ d.name }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label">Batch *</label>
+                    <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                        data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id" required>
+                        <option value="">Select Batch</option>
+                        {% for b in batches %}
+                        <option value="{{ b.id }}">{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <label class="form-label">Semester *</label>
+                    <select class="form-select" name="semester_id" data-chain="semester" data-chain-parent="batch"
+                        data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-param="batch_id" required>
+                        <option value="">Select Semester</option>
+                        {% for s in semesters %}
+                        <option value="{{ s.id }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label">Course Offering *</label>
+                    <select class="form-select" name="offering_id" data-chain="offering" data-chain-parent="semester"
+                        data-ajax-url="{% url 'enrollments:ajax_offerings' %}" data-ajax-param="semester_id" required>
+                        <option value="">Select Offering</option>
+                        {% for o in offerings %}
+                        <option value="{{ o.id }}">{{ o.course.course_code }} - {{ o.course.course_title }} ({{ o.session.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-12">
+                    <label class="form-label">Exclude Students (optional)</label>
+                    <select class="form-select" name="exclude_student_ids" multiple data-chain="students"
+                        data-chain-parent="batch" data-ajax-url="{% url 'enrollments:ajax_students' %}" data-ajax-param="batch_id">
+                        {% for s in students %}
+                        <option value="{{ s.id }}">{{ s.roll_no }} - {{ s.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Hold Ctrl/Cmd to select students who should NOT be enrolled.</div>
+                </div>
+                <div class="col-lg-3 d-grid">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-users"></i> Enroll Batch
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <!-- Filters -->
     <form method="get" class="row g-2 align-items-end mb-3">
         <div class="col-lg-4">
@@ -94,7 +171,7 @@
                         <a class="btn btn-sm btn-outline-primary" href="{% url 'enrollments:edit_enrollment' e.pk %}">
                             <i class="fas fa-pen"></i>
                         </a>
-                        {% can request.user.role "ENROLLMENTS" "delete" as can_delete_enrollments %}
+                        {% can request.user "ENROLLMENTS" "delete" as can_delete_enrollments %}
                         {% if can_delete_enrollments %}
                         <a class="btn btn-sm btn-outline-danger" href="{% url 'enrollments:delete_enrollment' e.pk %}">
                             <i class="fas fa-trash"></i>

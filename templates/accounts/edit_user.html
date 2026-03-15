@@ -6,7 +6,7 @@
 {% block dashboard_content %}
 <div class="rms-page-head">
     <h2>Edit User</h2>
-    <p>Update user details and role.</p>
+    <p>Update user details and groups.</p>
 </div>
 
 <div class="rms-card" style="max-width: 900px;">
@@ -32,10 +32,10 @@
             <input type="password" class="form-control" name="password" placeholder="Leave blank to keep current">
         </div>
         <div class="col-md-6">
-            <label class="form-label">Role *</label>
-            <select class="form-select" name="role" required>
-                {% for value, label in roles %}
-                <option value="{{ value }}" {% if user_obj.role == value %}selected{% endif %}>{{ label }}</option>
+            <label class="form-label">Groups *</label>
+            <select class="form-select" name="groups" multiple required>
+                {% for g in groups %}
+                <option value="{{ g.id }}" {% if g in user_obj.groups.all %}selected{% endif %}>{{ g.name }}</option>
                 {% endfor %}
             </select>
         </div>

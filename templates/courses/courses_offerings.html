@@ -17,6 +17,19 @@
             <div class="section-head">
                 <h3><i class="fas fa-plus-circle me-2"></i>Add Offering</h3>
             </div>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn active" type="button" data-tab="off-single">
+                    Single Entry
+                </button>
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="off-excel">
+                    Excel Upload
+                </button>
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="off-grid">
+                    Multi-Row Grid
+                </button>
+            </div>
+
+            <div class="rms-tab-panel" data-tab-panel="off-single">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_offering">
@@ -55,6 +68,131 @@
                     <i class="fas fa-plus"></i> Add Offering
                 </button>
             </form>
+            </div>
+
+            <div class="rms-tab-panel d-none" data-tab-panel="off-excel">
+                <div class="alert alert-info">
+                    <strong>Excel columns:</strong> Course Code, Semester, Session, Instructor Name
+                </div>
+                <form method="post" action="{% url 'courses:offerings_bulk_preview' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Upload Excel File (.xlsx)</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-file-import"></i> Preview Import
+                        </button>
+                    </div>
+                </form>
+                <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'courses:offerings_template' %}">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+            </div>
+
+            <div class="rms-tab-panel d-none" data-tab-panel="off-grid">
+                <form method="post" action="{% url 'courses:offerings_bulk_commit' %}" id="offGridForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="source" value="manual">
+                    <input type="hidden" name="rows_json" id="offRowsJson">
+                    <div class="rms-table-wrap">
+                        <table class="table table-sm align-middle rms-table mb-2" id="offGridTable">
+                            <thead>
+                                <tr>
+                                    <th>Course *</th>
+                                    <th>Semester *</th>
+                                    <th>Session *</th>
+                                    <th>Instructor *</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="grid-row">
+                                    <td><input class="form-control form-control-sm" name="course"></td>
+                                    <td><input class="form-control form-control-sm" name="semester"></td>
+                                    <td><input class="form-control form-control-sm" name="session"></td>
+                                    <td><input class="form-control form-control-sm" name="instructor_name"></td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="offAddRow">
+                            <i class="fas fa-plus"></i> Add Row
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-cloud-upload-alt"></i> Import Rows
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <hr class="my-3">
+            <div class="section-head">
+                <h3><i class="fas fa-layer-group me-2"></i>Bulk Add to Semester</h3>
+            </div>
+            <form method="post" id="bulkOfferingsForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="bulk_add_offerings">
+                <div class="mb-3">
+                    <label class="form-label">Department *</label>
+                    <select class="form-select" name="department_id" id="bulkDept" required>
+                        <option value="">Select Department</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Batch *</label>
+                    <select class="form-select" name="batch_id" id="bulkBatch" required disabled>
+                        <option value="">Select Batch</option>
+                        {% for b in batches %}
+                        <option value="{{ b.id }}" data-dept="{{ b.department_id }}">{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Semester *</label>
+                    <select class="form-select" name="semester_id" id="bulkSemester" required disabled>
+                        <option value="">Select Semester</option>
+                        {% for s in semesters %}
+                        <option value="{{ s.id }}" data-batch="{{ s.batch_id }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Session *</label>
+                    <select class="form-select" name="session_id" required>
+                        <option value="">Select Session</option>
+                        {% for s in sessions %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Courses (same department) *</label>
+                    <select class="form-select" name="course_ids" id="bulkCourses" multiple required>
+                        {% for c in courses %}
+                        <option value="{{ c.id }}" data-dept="{{ c.department_id }}">{{ c.course_code }} - {{ c.course_title }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Hold Ctrl/Cmd to select multiple.</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Instructor Name *</label>
+                    <input type="text" class="form-control" name="instructor_name" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Add All Courses
+                </button>
+            </form>
         </div>
     </div>
 
@@ -89,7 +227,7 @@
                 <div class="col-lg-3">
                     <label class="form-label">Batch</label>
                     <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
-                        data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                        data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-params="department_id,session_id">
                         <option value="">All Batches</option>
                         {% for b in batches %}
                         <option value="{{ b.id }}" {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
@@ -99,7 +237,7 @@
                 <div class="col-lg-3">
                     <label class="form-label">Semester</label>
                     <select class="form-select" name="semester_id" data-chain="semester" data-chain-parent="batch"
-                        data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-param="batch_id">
+                        data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-params="batch_id,session_id">
                         <option value="">All Semesters</option>
                         {% for s in semesters %}
                         <option value="{{ s.id }}" {% if semester_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
@@ -157,7 +295,7 @@
                             <td>{{ o.session.name }}</td>
                             <td>{{ o.instructor_name }}</td>
                             <td class="text-end">
-                                {% can request.user.role "COURSE_OFFERINGS" "delete" as can_delete_offerings %}
+                                {% can request.user "COURSE_OFFERINGS" "delete" as can_delete_offerings %}
                                 {% if can_delete_offerings %}
                                 <form method="post" class="d-inline"
                                     onsubmit="return confirm('Delete offering {{ o.course.course_code }} for {{ o.session.name }}?');">
@@ -214,4 +352,119 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const tabs = document.querySelectorAll(".rms-tab-btn");
+        const panels = document.querySelectorAll(".rms-tab-panel");
+        tabs.forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabs.forEach(b => b.classList.remove("active"));
+                panels.forEach(p => p.classList.add("d-none"));
+                btn.classList.add("active");
+                const target = btn.getAttribute("data-tab");
+                const panel = document.querySelector(`[data-tab-panel="${target}"]`);
+                if (panel) panel.classList.remove("d-none");
+            });
+        });
+
+        const table = document.getElementById("offGridTable");
+        const addRow = document.getElementById("offAddRow");
+        const rowsJson = document.getElementById("offRowsJson");
+        const form = document.getElementById("offGridForm");
+
+        function bindRemove(row) {
+            const btn = row.querySelector(".remove-row");
+            if (btn) {
+                btn.addEventListener("click", () => {
+                    if (table.tBodies[0].rows.length > 1) {
+                        row.remove();
+                    }
+                });
+            }
+        }
+
+        if (addRow && table) {
+            addRow.addEventListener("click", () => {
+                const row = table.tBodies[0].rows[0].cloneNode(true);
+                row.querySelectorAll("input").forEach(i => i.value = "");
+                bindRemove(row);
+                table.tBodies[0].appendChild(row);
+            });
+            bindRemove(table.tBodies[0].rows[0]);
+        }
+
+        if (form) {
+            form.addEventListener("submit", (e) => {
+                const rows = [];
+                let hasError = false;
+                table.querySelectorAll("tbody tr").forEach(tr => {
+                    const row = {};
+                    tr.querySelectorAll("input").forEach(el => {
+                        row[el.name] = (el.value || "").trim();
+                    });
+                    tr.classList.remove("table-danger");
+                    const required = ["course", "semester", "session", "instructor_name"];
+                    const missing = required.some(k => !row[k]);
+                    if (missing) {
+                        tr.classList.add("table-danger");
+                        hasError = true;
+                    }
+                    if (!missing) {
+                        rows.push(row);
+                    }
+                });
+                if (hasError) {
+                    e.preventDefault();
+                    alert("Please fill all required fields before importing.");
+                    return;
+                }
+                rowsJson.value = JSON.stringify(rows);
+            });
+        }
+    })();
+
+    (function () {
+        const dept = document.getElementById("bulkDept");
+        const batch = document.getElementById("bulkBatch");
+        const semester = document.getElementById("bulkSemester");
+        const courses = document.getElementById("bulkCourses");
+
+        function filterOptions(select, attr, value) {
+            Array.from(select.options).forEach(opt => {
+                if (!opt.value) return;
+                const match = opt.getAttribute(attr) === value;
+                opt.hidden = !match;
+                if (!match) opt.selected = false;
+            });
+        }
+
+        if (dept && batch && semester && courses) {
+            dept.addEventListener("change", () => {
+                batch.disabled = !dept.value;
+                semester.disabled = true;
+                if (!dept.value) {
+                    batch.value = "";
+                    semester.value = "";
+                    filterOptions(batch, "data-dept", "");
+                    filterOptions(courses, "data-dept", "");
+                    return;
+                }
+                filterOptions(batch, "data-dept", dept.value);
+                filterOptions(courses, "data-dept", dept.value);
+                semester.value = "";
+            });
+
+            batch.addEventListener("change", () => {
+                semester.disabled = !batch.value;
+                if (!batch.value) {
+                    semester.value = "";
+                    filterOptions(semester, "data-batch", "");
+                    return;
+                }
+                filterOptions(semester, "data-batch", batch.value);
+            });
+        }
+    })();
+</script>
 {% endblock %}

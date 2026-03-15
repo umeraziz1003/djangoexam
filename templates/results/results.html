@@ -81,12 +81,12 @@
         </div>
         <div class="col-lg-3">
             <label class="form-label">Course Offering</label>
-            <select class="form-select" name="offering_id" data-chain="offering" data-chain-parents="department,batch,semester,session"
-                data-ajax-url="{% url 'enrollments:ajax_offerings' %}" data-ajax-params="department_id,batch_id,semester_id,session_id">
+            <select class="form-select" name="offering_id" data-chain="offering" data-chain-parent="semester"
+                data-ajax-url="{% url 'enrollments:ajax_offerings' %}" data-ajax-param="semester_id">
                 <option value="">All Offerings</option>
                 {% for o in offerings %}
                 <option value="{{ o.id }}" {% if offering_id == o.id|stringformat:"s" %}selected{% endif %}>
-                    {{ o.course.course_code }} ? {{ o.course.course_title }} ({{ o.session.name }})
+                    {{ o.course.course_code }} - {{ o.course.course_title }} ({{ o.session.name }})
                 </option>
                 {% endfor %}
             </select>
@@ -94,11 +94,11 @@
         <div class="col-lg-3">
             <label class="form-label">Student</label>
             <select class="form-select" name="student_id" data-chain="student" data-chain-parent="batch"
-                data-ajax-url="{% url 'enrollments:ajax_students' %}" data-ajax-params="department_id,batch_id">
+                data-ajax-url="{% url 'enrollments:ajax_students' %}" data-ajax-param="batch_id">
                 <option value="">All Students</option>
                 {% for s in students %}
                 <option value="{{ s.id }}" {% if student_id == s.id|stringformat:"s" %}selected{% endif %}>
-                    {{ s.roll_no }} ? {{ s.full_name }}
+                    {{ s.roll_no }} - {{ s.full_name }}
                 </option>
                 {% endfor %}
             </select>

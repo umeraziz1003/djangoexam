@@ -25,27 +25,35 @@ class Command(BaseCommand):
         seed = [
             {"username": "exam_officer", "role": "EXAM_OFFICER"},
             {"username": "dept_controller", "role": "DEPT_CONTROLLER"},
-            {"username": "internal_exam_controller", "role": "INTERNAL_EXAM_CONTROLLER"},
             {"username": "student_user", "role": "STUDENT"},
         ]
 
         created = 0
         updated = 0
 
+        from accounts.permissions import ensure_default_groups
+        from django.contrib.auth.models import Group
+
+        ensure_default_groups()
+
         for item in seed:
             user, was_created = User.objects.get_or_create(
                 username=item["username"],
-                defaults={"role": item["role"]},
+                defaults={},
             )
             if was_created:
                 user.set_password(password)
                 user.save(update_fields=["password"])
+                group = Group.objects.filter(name=item["role"]).first()
+                if group:
+                    user.groups.add(group)
                 created += 1
-                self.stdout.write(self.style.SUCCESS(f"Created {user.username} ({user.role})"))
+                self.stdout.write(self.style.SUCCESS(f"Created {user.username}"))
             else:
                 changed = False
-                if user.role != item["role"]:
-                    user.role = item["role"]
+                group = Group.objects.filter(name=item["role"]).first()
+                if group and not user.groups.filter(id=group.id).exists():
+                    user.groups.add(group)
                     changed = True
                 if reset_password:
                     user.set_password(password)
@@ -53,7 +61,7 @@ class Command(BaseCommand):
                 if changed:
                     user.save()
                     updated += 1
-                    self.stdout.write(self.style.WARNING(f"Updated {user.username} ({user.role})"))
+                    self.stdout.write(self.style.WARNING(f"Updated {user.username}"))
                 else:
                     self.stdout.write(f"Skipped {user.username} (already exists)")
 

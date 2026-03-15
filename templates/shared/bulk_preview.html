@@ -1,0 +1,123 @@
+{% extends "dashboard/layout.html" %}
+{% load extras %}
+
+{% block title %}{{ page_title }} - Result Management System{% endblock %}
+{% block topbar_display %}{{ page_title }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>{{ page_title }}</h2>
+    <p>Review rows before saving to the database.</p>
+</div>
+
+<div class="rms-card">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <span class="chip blue">Total: {{ total }}</span>
+        <span class="chip green">Valid: {{ valid_count }}</span>
+        <span class="chip red">Invalid: {{ invalid_count }}</span>
+        {% if extra_badge %}
+        <span class="chip">{{ extra_badge }}</span>
+        {% endif %}
+    </div>
+
+    {% if invalid_count %}
+    <div class="alert alert-warning">
+        Some rows have errors. You can fix and re-upload, or import only the valid rows.
+    </div>
+    {% endif %}
+
+    <div class="alert alert-info mb-3">
+        You can edit values directly in the preview. Validation will run again on import.
+    </div>
+
+    <div class="rms-table-wrap mb-3">
+        <table class="table table-sm align-middle rms-table mb-0" id="previewTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    {% for col in columns %}
+                    <th>{{ col.label }}</th>
+                    {% endfor %}
+                    <th>Errors</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr class="{% if r.errors %}table-danger{% endif %}">
+                    <td>{{ r.row_num }}</td>
+                    {% for col in columns %}
+                    <td>
+                        {% if col.type == "select" %}
+                        <select class="form-select form-select-sm" name="{{ col.key }}">
+                            <option value="">Select</option>
+                            {% for opt in col.options %}
+                            <option value="{{ opt.value }}" {% if r.raw|get_item:col.key == opt.value %}selected{% endif %}>{{ opt.label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="{% if col.type == 'date' %}date{% else %}text{% endif %}"
+                            class="form-control form-control-sm"
+                            name="{{ col.key }}"
+                            value="{{ r.display|get_item:col.key }}">
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td>
+                        {% if r.errors %}
+                        {{ r.errors|join:", " }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ columns|length|add:2 }}">No rows found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" action="{{ commit_url }}" class="d-flex flex-wrap gap-2" id="previewForm">
+        {% csrf_token %}
+        <input type="hidden" name="rows_json" value="" id="previewRowsJson">
+        <input type="hidden" name="source" value="{{ source }}">
+        {% for hidden in hidden_fields %}
+        <input type="hidden" name="{{ hidden.name }}" value="{{ hidden.value }}">
+        {% endfor %}
+        {% if invalid_count %}
+        <button type="submit" class="btn btn-outline-primary" name="import_valid" value="1">
+            <i class="fas fa-check"></i> Import Valid Rows
+        </button>
+        {% endif %}
+        {% if not invalid_count %}
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-cloud-upload-alt"></i> Import All Rows
+        </button>
+        {% endif %}
+        <a class="btn btn-ghost" href="{{ back_url }}">Back</a>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById("previewForm");
+        const table = document.getElementById("previewTable");
+        const rowsJson = document.getElementById("previewRowsJson");
+        if (!form || !table || !rowsJson) return;
+
+        form.addEventListener("submit", () => {
+            const rows = [];
+            table.querySelectorAll("tbody tr").forEach(tr => {
+                const row = {};
+                tr.querySelectorAll("input, select").forEach(input => {
+                    row[input.name] = (input.value || "").trim();
+                });
+                rows.push(row);
+            });
+            rowsJson.value = JSON.stringify(rows);
+        });
+    })();
+</script>
+{% endblock %}

@@ -71,7 +71,7 @@
             const selected = parentValues[key];
             if (!selected) return;
             const optVal = opt.getAttribute("data-" + key);
-            if (optVal !== selected) {
+            if (optVal !== null && optVal !== "" && optVal !== selected) {
               hide = true;
             }
           });

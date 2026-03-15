@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load permissions_tags %}
 
 {% block title %}{% block topbar_title %}Dashboard{% endblock %} — Result Management System{% endblock %}
 
@@ -25,7 +26,13 @@
             </a>
         </div>
 
-        {% if request.user.role == "EXAM_OFFICER" or request.user.role == "DEPT_CONTROLLER" or request.user.role == "INTERNAL_EXAM_CONTROLLER" %}
+        {% can request.user "BATCHES" "read" as can_batches %}
+        {% can request.user "SESSIONS" "read" as can_sessions %}
+        {% can request.user "SEMESTERS" "read" as can_semesters %}
+        {% can request.user "COURSES" "read" as can_courses %}
+        {% can request.user "COURSE_OFFERINGS" "read" as can_offerings %}
+        {% can request.user "ENROLLMENTS" "read" as can_enrollments %}
+        {% if can_batches or can_sessions or can_semesters or can_courses or can_offerings or can_enrollments %}
         <div class="nav-section">
             <div class="nav-label">Academic Setup</div>
             <div class="nav-group open">
@@ -82,7 +89,10 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% can request.user "STUDENTS" "read" as can_students %}
+        {% if can_students %}
         <div class="nav-section">
             <div class="nav-label">Admissions</div>
             <div class="nav-group">
@@ -102,7 +112,11 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% can request.user "EXAMS" "read" as can_exams %}
+        {% can request.user "RESULTS" "read" as can_results %}
+        {% if can_exams or can_results %}
         <div class="nav-section">
             <div class="nav-label">Examinations</div>
             <div class="nav-group">
@@ -113,6 +127,7 @@
                     <i class="fas fa-chevron-down nav-caret"></i>
                 </div>
                 <div class="nav-submenu" id="exams-menu">
+                    {% if can_exams %}
                     <a class="nav-subitem{% if '/exams/marks/' in path %} active{% endif %}"
                         href="{% url 'exams:manage_marks' %}">
                         <i class="fas fa-pen-to-square"></i> Manage Marks
@@ -129,10 +144,17 @@
                         href="{% url 'exams:exam_rules' %}">
                         <i class="fas fa-clipboard-check"></i> Exam Rules
                     </a>
+                    {% endif %}
+                    {% if can_results %}
                     <a class="nav-subitem{% if '/results/' in path %} active{% endif %}"
                         href="{% url 'results:results' %}">
                         <i class="fas fa-clipboard-list"></i> Results
                     </a>
+                    <a class="nav-subitem{% if '/results/consolidated/' in path %} active{% endif %}"
+                        href="{% url 'results:consolidated_sheet' %}">
+                        <i class="fas fa-table"></i> Consolidated Sheet
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -155,6 +177,10 @@
         {% if request.user.is_exam_officer %}
         <div class="nav-section">
             <div class="nav-label">Admin</div>
+            <a class="nav-item{% if '/accounts/groups/' in path %} active{% endif %}"
+                href="{% url 'accounts:groups' %}">
+                <i class="fas fa-user-tag"></i> Groups
+            </a>
             <a class="nav-item{% if '/accounts/permissions/' in path %} active{% endif %}"
                 href="{% url 'accounts:permissions' %}">
                 <i class="fas fa-user-shield"></i> Permissions
@@ -173,7 +199,13 @@
                 <div class="user-avatar">{{ request.user.username|first|upper }}</div>
                 <div style="flex:1;overflow:hidden;">
                     <div class="user-name">{{ request.user.username }}</div>
-                    <div class="user-role">{{ request.user.get_role_display }}</div>
+                    <div class="user-role">
+                        {% for g in request.user.groups.all %}
+                        {{ g.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                        —
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

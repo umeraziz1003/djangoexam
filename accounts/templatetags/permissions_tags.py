@@ -6,5 +6,5 @@ register = template.Library()
 
 
 @register.simple_tag
-def can(role, module, action):
-    return can_check(role, module, action)
+def can(user, module, action):
+    return can_check(user, module, action)

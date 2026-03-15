@@ -878,3 +878,221 @@ body.rms-body {
 .fw-500 {
     font-weight: 500;
 }
+
+/* ===================== Permissions Page ===================== */
+.perm-tabs-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 16px 20px 0;
+    overflow-x: auto;
+}
+
+.perm-group-tabs {
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: max-content;
+}
+
+.perm-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 20px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text2);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+    white-space: nowrap;
+}
+
+.perm-tab-btn:hover:not(.active) {
+    background: rgba(45, 108, 223, 0.07);
+    color: var(--text);
+}
+
+.perm-tab-btn.active {
+    background: var(--surface);
+    color: var(--accent);
+    border-color: var(--border);
+    border-bottom-color: var(--surface);
+    margin-bottom: -1px;
+}
+
+.perm-tab-btn i {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+/* Perm matrix table */
+.perm-table thead tr {
+    background: var(--bg2);
+}
+
+.perm-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text3);
+    font-weight: 600;
+    padding: 14px 16px;
+    vertical-align: middle;
+}
+
+.perm-module-col {
+    min-width: 200px;
+}
+
+.perm-action-col {
+    text-align: center;
+    min-width: 110px;
+}
+
+/* Action header pills */
+.perm-action-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+}
+
+.perm-head-create {
+    background: rgba(14, 166, 138, 0.12);
+    color: var(--accent3);
+}
+
+.perm-head-read {
+    background: rgba(45, 108, 223, 0.12);
+    color: var(--accent);
+}
+
+.perm-head-update {
+    background: rgba(240, 181, 74, 0.18);
+    color: var(--accent5);
+}
+
+.perm-head-delete {
+    background: rgba(224, 86, 86, 0.14);
+    color: var(--accent4);
+}
+
+/* Toggle-All switch in header */
+.perm-all-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+    margin: 0;
+}
+
+.perm-all-switch .form-check-input {
+    margin: 0;
+    float: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.perm-all-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.4px;
+    margin: 0;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+/* Module rows */
+.perm-module-row:hover {
+    background: rgba(45, 108, 223, 0.04);
+}
+
+.perm-module-row td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.perm-module-row:last-child td {
+    border-bottom: none;
+}
+
+.perm-module-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.perm-module-icon-wrap {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--bg2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text3);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+/* Toggle switches in rows */
+.perm-switch {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.perm-switch .form-check-input {
+    width: 2.5em;
+    height: 1.35em;
+    margin: 0;
+    float: none;
+    cursor: pointer;
+    transition: background-color 0.18s, border-color 0.18s;
+}
+
+.perm-switch .perm-sw-c:checked {
+    background-color: var(--accent3);
+    border-color: var(--accent3);
+}
+
+.perm-switch .perm-sw-r:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.perm-switch .perm-sw-u:checked {
+    background-color: var(--accent5);
+    border-color: var(--accent5);
+}
+
+.perm-switch .perm-sw-d:checked {
+    background-color: var(--accent4);
+    border-color: var(--accent4);
+}
+
+/* Form actions bar */
+.perm-form-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+

@@ -17,6 +17,19 @@
             <div class="section-head">
                 <h3><i class="fas fa-plus-circle me-2"></i>Add Batch</h3>
             </div>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn active" type="button" data-tab="batch-single">
+                    Single Entry
+                </button>
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="batch-excel">
+                    Excel Upload
+                </button>
+                <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="batch-grid">
+                    Multi-Row Grid
+                </button>
+            </div>
+
+            <div class="rms-tab-panel" data-tab-panel="batch-single">
             <form method="post" action="{% url 'academics:create_batch' %}">
                 {% csrf_token %}
                 <div class="mb-3">
@@ -62,6 +75,74 @@
                     <i class="fas fa-plus"></i> Add Batch
                 </button>
             </form>
+            </div>
+
+            <div class="rms-tab-panel d-none" data-tab-panel="batch-excel">
+                <div class="alert alert-info">
+                    <strong>Excel columns:</strong> Department, Title, Name, Start Date, Program, Status
+                </div>
+                <form method="post" action="{% url 'academics:batches_bulk_preview' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Upload Excel File (.xlsx)</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-file-import"></i> Preview Import
+                        </button>
+                    </div>
+                </form>
+                <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'academics:batches_template' %}">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+            </div>
+
+            <div class="rms-tab-panel d-none" data-tab-panel="batch-grid">
+                <form method="post" action="{% url 'academics:batches_bulk_commit' %}" id="batchGridForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="source" value="manual">
+                    <input type="hidden" name="rows_json" id="batchRowsJson">
+                    <div class="rms-table-wrap">
+                        <table class="table table-sm align-middle rms-table mb-2" id="batchGridTable">
+                            <thead>
+                                <tr>
+                                    <th>Department *</th>
+                                    <th>Title *</th>
+                                    <th>Name *</th>
+                                    <th>Start Date *</th>
+                                    <th>Program *</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="grid-row">
+                                    <td><input class="form-control form-control-sm" name="department"></td>
+                                    <td><input class="form-control form-control-sm" name="title"></td>
+                                    <td><input class="form-control form-control-sm" name="name"></td>
+                                    <td><input type="date" class="form-control form-control-sm" name="start_date"></td>
+                                    <td><input class="form-control form-control-sm" name="program"></td>
+                                    <td><input class="form-control form-control-sm" name="status" placeholder="ACTIVE"></td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="batchAddRow">
+                            <i class="fas fa-plus"></i> Add Row
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-cloud-upload-alt"></i> Import Rows
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -142,7 +223,7 @@
                                     aria-expanded="false" aria-label="Edit {{ batch.title }}">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                {% can request.user.role "BATCHES" "delete" as can_delete_batches %}
+                                {% can request.user "BATCHES" "delete" as can_delete_batches %}
                                 {% if can_delete_batches %}
                                 <form method="post" action="{% url 'academics:delete_batch' batch.pk %}"
                                     class="d-inline"
@@ -260,4 +341,76 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const tabs = document.querySelectorAll(".rms-tab-btn");
+        const panels = document.querySelectorAll(".rms-tab-panel");
+        tabs.forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabs.forEach(b => b.classList.remove("active"));
+                panels.forEach(p => p.classList.add("d-none"));
+                btn.classList.add("active");
+                const target = btn.getAttribute("data-tab");
+                const panel = document.querySelector(`[data-tab-panel="${target}"]`);
+                if (panel) panel.classList.remove("d-none");
+            });
+        });
+
+        const table = document.getElementById("batchGridTable");
+        const addRow = document.getElementById("batchAddRow");
+        const rowsJson = document.getElementById("batchRowsJson");
+        const form = document.getElementById("batchGridForm");
+
+        function bindRemove(row) {
+            const btn = row.querySelector(".remove-row");
+            if (btn) {
+                btn.addEventListener("click", () => {
+                    if (table.tBodies[0].rows.length > 1) {
+                        row.remove();
+                    }
+                });
+            }
+        }
+
+        if (addRow && table) {
+            addRow.addEventListener("click", () => {
+                const row = table.tBodies[0].rows[0].cloneNode(true);
+                row.querySelectorAll("input").forEach(i => i.value = "");
+                bindRemove(row);
+                table.tBodies[0].appendChild(row);
+            });
+            bindRemove(table.tBodies[0].rows[0]);
+        }
+
+        if (form) {
+            form.addEventListener("submit", (e) => {
+                const rows = [];
+                let hasError = false;
+                table.querySelectorAll("tbody tr").forEach(tr => {
+                    const row = {};
+                    tr.querySelectorAll("input").forEach(el => {
+                        row[el.name] = (el.value || "").trim();
+                    });
+                    tr.classList.remove("table-danger");
+                    const required = ["department", "title", "name", "start_date", "program"];
+                    const missing = required.some(k => !row[k]);
+                    if (missing) {
+                        tr.classList.add("table-danger");
+                        hasError = true;
+                    }
+                    if (!missing) {
+                        rows.push(row);
+                    }
+                });
+                if (hasError) {
+                    e.preventDefault();
+                    alert("Please fill all required fields before importing.");
+                    return;
+                }
+                rowsJson.value = JSON.stringify(rows);
+            });
+        }
+    })();
+</script>
 {% endblock %}

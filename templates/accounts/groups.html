@@ -1,0 +1,112 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Groups — Result Management System{% endblock %}
+{% block topbar_display %}Groups{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Group Management</h2>
+    <p>Create and manage permission groups. System groups are protected.</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="rms-card">
+            <div class="section-head">
+                <h3><i class="fas fa-plus-circle me-2"></i>Add Group</h3>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="mb-3">
+                    <label class="form-label">Group Name *</label>
+                    <input type="text" class="form-control" name="name" placeholder="e.g. Finance Officer" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Create Group
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="rms-card">
+            <div class="rms-section-title">
+                <h5>Groups</h5>
+                <span class="badge-soft rms-muted">{{ groups|length }} total</span>
+            </div>
+
+            <div class="rms-table-wrap">
+                <table class="table table-sm align-middle rms-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in groups %}
+                        <tr>
+                            <td class="fw-500">{{ g.name }}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#edit-group-{{ g.id }}"
+                                    aria-expanded="false" aria-label="Edit {{ g.name }}"
+                                    {% if g.name in system_group_names %}disabled{% endif %}>
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                {% if g.name not in system_group_names %}
+                                <form method="post" class="d-inline"
+                                    onsubmit="return confirm('Delete group {{ g.name }}?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="group_id" value="{{ g.id }}">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Delete group">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr class="collapse rms-edit-row" id="edit-group-{{ g.id }}">
+                            <td colspan="2">
+                                <div class="p-3 rounded border bg-light">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="edit">
+                                        <input type="hidden" name="group_id" value="{{ g.id }}">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-9">
+                                                <label class="form-label">Group Name</label>
+                                                <input type="text" class="form-control form-control-sm" name="name"
+                                                    value="{{ g.name }}"
+                                                    {% if g.name in system_group_names %}disabled{% endif %}>
+                                            </div>
+                                            <div class="col-md-3 d-grid">
+                                                <button class="btn btn-sm btn-primary"
+                                                    {% if g.name in system_group_names %}disabled{% endif %}>
+                                                    <i class="fas fa-check"></i> Save
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2">
+                                <div class="rms-empty">
+                                    <i class="fas fa-user-tag fa-2x mb-2 d-block"></i>
+                                    <p>No groups found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

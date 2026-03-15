@@ -55,7 +55,7 @@
         <div class="col-lg-3">
             <label class="form-label">Batch</label>
             <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
-                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-params="department_id,session_id">
                 <option value="">All Batches</option>
                 {% for b in batches %}
                 <option value="{{ b.id }}" data-department="{{ b.department_id }}"
@@ -66,7 +66,7 @@
         <div class="col-lg-3">
             <label class="form-label">Semester</label>
             <select class="form-select" name="semester_id" data-chain="semester" data-chain-parent="batch"
-                data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-param="batch_id">
+                data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-params="batch_id,session_id">
                 <option value="">All Semesters</option>
                 {% for s in semesters %}
                 <option value="{{ s.id }}" data-batch="{{ s.batch_id }}"
@@ -76,7 +76,7 @@
         </div>
         <div class="col-lg-3">
             <label class="form-label">Session</label>
-            <select class="form-select" name="session_id" data-chain="session" data-chain-enable="semester">
+            <select class="form-select" name="session_id" data-chain="session">
                 <option value="">All Sessions</option>
                 {% for s in sessions %}
                 <option value="{{ s.id }}" {% if session_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>

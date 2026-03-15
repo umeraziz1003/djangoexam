@@ -17,6 +17,7 @@
             </div>
             <form method="post">
                 {% csrf_token %}
+                <input type="hidden" name="action" value="add_one">
                 <div class="mb-3">
                     <label class="form-label" for="{{ form.min_percentage.id_for_label }}">{{ form.min_percentage.label }}</label>
                     {{ form.min_percentage }}
@@ -40,6 +41,27 @@
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="fas fa-plus"></i> Add
                 </button>
+            </form>
+        </div>
+
+        <div class="rms-card mt-3">
+            <div class="section-head">
+                <h3><i class="fas fa-file-excel me-2"></i>Excel Import</h3>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'exams:grade_scale_import' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Upload Excel</label>
+                    <input class="form-control" type="file" name="excel_file" accept=".xlsx,.xls">
+                </div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-ghost" href="{% url 'exams:grade_scale_template' %}">
+                        <i class="fas fa-download"></i> Template
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Import
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -98,6 +120,76 @@
                 </table>
             </div>
         </div>
+
+        <div class="rms-card mt-3">
+            <div class="rms-section-title">
+                <h5>Bulk Add Grid</h5>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="bulk_add">
+                <input type="hidden" name="row_count" id="grade-row-count" value="5">
+                <div class="rms-table-wrap">
+                    <table class="table table-sm align-middle rms-table mb-0" id="grade-bulk-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Min %</th>
+                                <th>Max %</th>
+                                <th>Grade</th>
+                                <th>Grade Point</th>
+                                <th>Active</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in "12345" %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><input class="form-control" name="min_percentage_{{ forloop.counter }}" type="number" step="0.01" min="0" max="100"></td>
+                                <td><input class="form-control" name="max_percentage_{{ forloop.counter }}" type="number" step="0.01" min="0" max="100"></td>
+                                <td><input class="form-control" name="grade_{{ forloop.counter }}" type="text" placeholder="e.g. A"></td>
+                                <td><input class="form-control" name="grade_point_{{ forloop.counter }}" type="number" step="0.01" min="0" max="4"></td>
+                                <td class="text-center">
+                                    <input class="form-check-input" name="is_active_{{ forloop.counter }}" type="checkbox" checked>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button type="button" class="btn btn-ghost" id="grade-add-row">
+                        <i class="fas fa-plus"></i> Add Row
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Rows
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const btn = document.getElementById("grade-add-row");
+        const table = document.getElementById("grade-bulk-table").getElementsByTagName("tbody")[0];
+        const counterInput = document.getElementById("grade-row-count");
+        if (!btn || !table || !counterInput) return;
+        btn.addEventListener("click", function () {
+            const next = parseInt(counterInput.value || "0", 10) + 1;
+            counterInput.value = String(next);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${next}</td>
+                <td><input class="form-control" name="min_percentage_${next}" type="number" step="0.01" min="0" max="100"></td>
+                <td><input class="form-control" name="max_percentage_${next}" type="number" step="0.01" min="0" max="100"></td>
+                <td><input class="form-control" name="grade_${next}" type="text" placeholder="e.g. A"></td>
+                <td><input class="form-control" name="grade_point_${next}" type="number" step="0.01" min="0" max="4"></td>
+                <td class="text-center"><input class="form-check-input" name="is_active_${next}" type="checkbox" checked></td>
+            `;
+            table.appendChild(row);
+        });
+    })();
+</script>
 {% endblock %}

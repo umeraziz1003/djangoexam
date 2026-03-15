@@ -1,0 +1,217 @@
+{% extends "dashboard/layout.html" %}
+{% load extras %}
+
+{% block title %}Consolidated Sheet - Result Management System{% endblock %}
+{% block topbar_display %}Consolidated Sheet{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>All Semester Consolidated Sheet</h2>
+    <p>Consolidated GPA across semesters for each student (published results only).</p>
+</div>
+
+<div class="rms-card">
+    <div class="rms-section-title">
+        <h5>Consolidated Sheet</h5>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="consolidated" data-auto-submit>
+        <div class="col-lg-3">
+            <label class="form-label">Department</label>
+            {% if request.user.is_exam_officer %}
+            <select class="form-select" name="department_id" data-chain="department">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <input type="hidden" name="department_id" value="{{ department_id }}">
+            <select class="form-select" name="department_id" data-chain="department" disabled>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Batch</label>
+            <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                <option value="{{ b.id }}" {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Session</label>
+            <select class="form-select" name="session_id">
+                <option value="">All Sessions</option>
+                {% for s in sessions %}
+                <option value="{{ s.id }}" {% if session_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Semester</label>
+            <select class="form-select" name="semester_id">
+                <option value="">All Semesters</option>
+                {% for sem in semester_options %}
+                <option value="{{ sem.id }}" {% if semester_id == sem.id|stringformat:"s" %}selected{% endif %}>{{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" name="search" placeholder="Roll no or student" value="{{ search }}">
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+        {% if department_id or batch_id or session_id or semester_id or search %}
+        <div class="col-lg-2 d-grid">
+            <a href="{% url 'results:consolidated_sheet' %}" class="btn btn-ghost">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="rms-table-wrap">
+        {% if semester_id %}
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th colspan="{{ total_cols }}">
+                        {% if semester_obj %}
+                        Department: {{ semester_obj.batch.department.name }} | Batch: {{ semester_obj.batch.title }} | {{ semester_obj }}
+                        {% else %}
+                        Semester Detail
+                        {% endif %}
+                    </th>
+                </tr>
+                <tr>
+                    <th rowspan="2">S.No</th>
+                    <th rowspan="2">Student Name</th>
+                    <th rowspan="2">Reg No</th>
+                    <th rowspan="2">Roll No</th>
+                    {% for off in offerings %}
+                    <th colspan="3">{{ off.course.course_title }} ({{ off.course.credit_hours }})</th>
+                    {% endfor %}
+                    <th rowspan="2">{{ semester_label }} GP (CRH)</th>
+                    <th rowspan="2">{{ semester_label }} Percentage</th>
+                    <th rowspan="2">{{ semester_label }} GPA</th>
+                    <th rowspan="2">Status</th>
+                    <th rowspan="2">Remarks</th>
+                </tr>
+                <tr>
+                    {% for off in offerings %}
+                    <th>Marks</th>
+                    <th>NG</th>
+                    <th>GP</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td>{{ row.student.full_name }}</td>
+                    <td>{{ row.student.registration_no }}</td>
+                    <td><code>{{ row.student.roll_no }}</code></td>
+                    {% for course in row.course_rows %}
+                        <td>{{ course.marks|default:"" }}</td>
+                        <td>{{ course.ng|default:"" }}</td>
+                        <td>{{ course.gp|default:"" }}</td>
+                    {% endfor %}
+                    <td>
+                        {% if row.total_quality %}
+                        {{ row.total_quality }} ({{ row.total_credits }})
+                        {% endif %}
+                    </td>
+                    <td>{{ row.percentage|default:"" }}</td>
+                    <td>{{ row.gpa|default:"" }}</td>
+                    <td>{{ row.status|default:"" }}</td>
+                    <td>{{ row.remarks|default:"" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ total_cols }}">
+                        <div class="rms-empty">
+                            <i class="fas fa-clipboard-list fa-2x mb-2 d-block"></i>
+                            <p>No students found for the current filters.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Roll No</th>
+                    {% for sem in semesters %}
+                    <th>{{ sem }}</th>
+                    {% endfor %}
+                    <th>CGPA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td>{{ row.student.full_name }}</td>
+                    <td><code>{{ row.student.roll_no }}</code></td>
+                    {% for sem in semesters %}
+                        {% with gpa=row.gpa_map|get_item:sem.id %}
+                        <td>{{ gpa|default:"-" }}</td>
+                        {% endwith %}
+                    {% endfor %}
+                    <td>{{ row.cgpa|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ semesters|length|add:'4' }}">
+                        <div class="rms-empty">
+                            <i class="fas fa-clipboard-list fa-2x mb-2 d-block"></i>
+                            <p>No students found for the current filters.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3" aria-label="Consolidated pagination">
+        <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -17,6 +17,19 @@
         </a>
     </div>
 
+    <div class="d-flex flex-wrap gap-2 mb-3" role="tablist">
+        <button class="btn btn-sm btn-outline-primary rms-tab-btn active" type="button" data-tab="single">
+            Single Entry
+        </button>
+        <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="excel">
+            Excel Upload
+        </button>
+        <button class="btn btn-sm btn-outline-primary rms-tab-btn" type="button" data-tab="grid">
+            Multi-Row Grid
+        </button>
+    </div>
+
+    <div class="rms-tab-panel" data-tab-panel="single">
     <form method="post" class="row g-3">
         {% csrf_token %}
         <div class="col-md-6">
@@ -75,5 +88,205 @@
             <a class="btn btn-ghost" href="{% url 'admission:students' %}">Cancel</a>
         </div>
     </form>
+    </div>
+
+    <div class="rms-tab-panel d-none" data-tab-panel="excel">
+        <div class="alert alert-info">
+            <strong>Excel columns:</strong> Full Name, Father Name, Date of Birth, CNIC, Roll No, Registration No.
+            Batch is selected below and applied to all rows.
+            Date format recommended: YYYY-MM-DD.
+        </div>
+        <form method="post" action="{% url 'admission:students_bulk_preview' %}" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label class="form-label">Department *</label>
+                {% if request.user.is_exam_officer %}
+                <select class="form-select" name="department_id" id="excelDepartment" data-chain="department" data-chain-group="bulk-excel" required>
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="hidden" name="department_id" value="{{ request.user.department_id }}">
+                <select class="form-select" disabled>
+                    {% for d in departments %}
+                    {% if d.id == request.user.department_id %}
+                    <option value="{{ d.id }}" selected>{{ d.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Batch *</label>
+                <select class="form-select" name="batch_id" id="excelBatch" data-chain="batch" data-chain-parent="department"
+                    data-chain-group="bulk-excel" data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id" required {% if request.user.is_exam_officer %}disabled{% endif %}>
+                    <option value="">Select Batch</option>
+                    {% for b in batches %}
+                    <option value="{{ b.id }}">{{ b }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Upload Excel File (.xlsx)</label>
+                <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+            </div>
+            <div class="col-12">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'admission:students_template' %}">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-import"></i> Preview Import
+                </button>
+                <a class="btn btn-ghost" href="{% url 'admission:students' %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="rms-tab-panel d-none" data-tab-panel="grid">
+        <form method="post" action="{% url 'admission:students_bulk_commit' %}" id="gridForm">
+            {% csrf_token %}
+            <input type="hidden" name="source" value="manual">
+            <input type="hidden" name="rows_json" id="rowsJson">
+            <div class="rms-table-wrap">
+                <table class="table table-sm align-middle rms-table mb-2" id="gridTable">
+                    <thead>
+                        <tr>
+                            <th>Full Name *</th>
+                            <th>Father Name *</th>
+                            <th>DOB *</th>
+                            <th>CNIC *</th>
+                            <th>Roll No *</th>
+                            <th>Reg No *</th>
+                            <th>Batch *</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="grid-row">
+                            <td><input class="form-control form-control-sm" name="full_name" placeholder="e.g. Ali Raza"></td>
+                            <td><input class="form-control form-control-sm" name="father_name" placeholder="e.g. Ahmed Raza"></td>
+                            <td><input type="date" class="form-control form-control-sm" name="date_of_birth"></td>
+                            <td><input class="form-control form-control-sm" name="cnic" placeholder="35202-1234567-8"></td>
+                            <td><input class="form-control form-control-sm" name="roll_no" placeholder="CS-2024-001"></td>
+                            <td><input class="form-control form-control-sm" name="registration_no" placeholder="REG-2024-1001"></td>
+                            <td>
+                                <select class="form-select form-select-sm" name="batch">
+                                    <option value="">Select Batch</option>
+                                    {% for b in batches %}
+                                    <option value="{{ b.id }}">{{ b }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex gap-2 mb-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addRow">
+                    <i class="fas fa-plus"></i> Add Row
+                </button>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-cloud-upload-alt"></i> Import Rows
+                </button>
+                <a class="btn btn-sm btn-ghost" href="{% url 'admission:students' %}">Cancel</a>
+            </div>
+            <div class="form-text text-muted">Client-side validation runs before upload; server validates again.</div>
+        </form>
+    </div>
 </div>
+
+<script>
+    (function () {
+        const tabs = document.querySelectorAll(".rms-tab-btn");
+        const panels = document.querySelectorAll(".rms-tab-panel");
+        tabs.forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabs.forEach(b => b.classList.remove("active"));
+                panels.forEach(p => p.classList.add("d-none"));
+                btn.classList.add("active");
+                const target = btn.getAttribute("data-tab");
+                const panel = document.querySelector(`[data-tab-panel="${target}"]`);
+                if (panel) panel.classList.remove("d-none");
+            });
+        });
+
+        const gridTable = document.getElementById("gridTable");
+        const addRow = document.getElementById("addRow");
+        const rowsJson = document.getElementById("rowsJson");
+        const gridForm = document.getElementById("gridForm");
+
+        function bindRemove(row) {
+            const btn = row.querySelector(".remove-row");
+            if (btn) {
+                btn.addEventListener("click", () => {
+                    if (gridTable.tBodies[0].rows.length > 1) {
+                        row.remove();
+                    }
+                });
+            }
+        }
+
+        if (addRow && gridTable) {
+            addRow.addEventListener("click", () => {
+                const row = gridTable.tBodies[0].rows[0].cloneNode(true);
+                row.querySelectorAll("input").forEach(i => i.value = "");
+                row.querySelectorAll("select").forEach(s => s.value = "");
+                bindRemove(row);
+                gridTable.tBodies[0].appendChild(row);
+            });
+            bindRemove(gridTable.tBodies[0].rows[0]);
+        }
+
+        const excelDept = document.getElementById("excelDepartment");
+        const excelBatch = document.getElementById("excelBatch");
+        if (excelDept && excelBatch) {
+            const toggleBatch = () => {
+                excelBatch.disabled = !excelDept.value;
+                if (!excelDept.value) {
+                    excelBatch.value = "";
+                }
+            };
+            excelDept.addEventListener("change", toggleBatch);
+            toggleBatch();
+        }
+
+        if (gridForm) {
+            gridForm.addEventListener("submit", (e) => {
+                const rows = [];
+                let hasError = false;
+                gridTable.querySelectorAll("tbody tr").forEach(tr => {
+                    const row = {};
+                    tr.querySelectorAll("input, select").forEach(el => {
+                        row[el.name] = (el.value || "").trim();
+                    });
+                    tr.classList.remove("table-danger");
+                    const required = ["full_name", "father_name", "date_of_birth", "cnic", "roll_no", "registration_no", "batch"];
+                    const missing = required.some(k => !row[k]);
+                    if (missing) {
+                        tr.classList.add("table-danger");
+                        hasError = true;
+                    }
+                    if (!missing) {
+                        rows.push(row);
+                    }
+                });
+                if (hasError) {
+                    e.preventDefault();
+                    alert("Please fill all required fields before importing.");
+                    return;
+                }
+                rowsJson.value = JSON.stringify(rows);
+            });
+        }
+    })();
+</script>
 {% endblock %}

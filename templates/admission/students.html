@@ -99,7 +99,7 @@
                         <a class="btn btn-sm btn-outline-primary" href="{% url 'admission:edit_student' s.pk %}">
                             <i class="fas fa-pen"></i>
                         </a>
-                        {% can request.user.role "STUDENTS" "delete" as can_delete_students %}
+                        {% can request.user "STUDENTS" "delete" as can_delete_students %}
                         {% if can_delete_students %}
                         <a class="btn btn-sm btn-outline-danger" href="{% url 'admission:delete_student' s.pk %}">
                             <i class="fas fa-trash"></i>

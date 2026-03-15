@@ -38,6 +38,25 @@
         {% csrf_token %}
         <input type="hidden" name="offering_id" value="{{ offering_id }}">
 
+        <div class="alert alert-info mb-3">
+            <strong>Excel upload:</strong> Use columns Roll No, Sessional, Midterm, Terminal.
+            <a class="btn btn-sm btn-outline-secondary ms-2" href="{% url 'exams:marks_template' %}">
+                <i class="fas fa-download"></i> Download Template
+            </a>
+        </div>
+
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-lg-8">
+                <label class="form-label">Upload Excel Marks (.xlsx)</label>
+                <input type="file" name="excel_file" class="form-control" accept=".xlsx" form="marksUploadForm">
+            </div>
+            <div class="col-lg-4 d-grid">
+                <button class="btn btn-outline-primary" type="submit" form="marksUploadForm">
+                    <i class="fas fa-file-import"></i> Upload Excel
+                </button>
+            </div>
+        </div>
+
         <div class="rms-table-wrap">
             <table class="table table-sm align-middle rms-table mb-0 rms-table-wide">
                 <thead>
@@ -96,6 +115,12 @@
             </button>
         </div>
         {% endif %}
+    </form>
+
+    <form method="post" enctype="multipart/form-data" id="marksUploadForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_excel">
+        <input type="hidden" name="offering_id" value="{{ offering_id }}">
     </form>
     {% endif %}
 </div>

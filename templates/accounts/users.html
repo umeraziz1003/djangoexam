@@ -6,7 +6,7 @@
 {% block dashboard_content %}
 <div class="rms-page-head">
     <h2>Users</h2>
-    <p>Manage system users and their roles.</p>
+    <p>Manage system users and their groups.</p>
 </div>
 
 <div class="rms-card">
@@ -19,11 +19,11 @@
 
     <form method="get" class="row g-2 align-items-end mb-3">
         <div class="col-lg-4">
-            <label class="form-label">Role</label>
-            <select class="form-select" name="role">
-                <option value="">All Roles</option>
-                {% for value, label in users.model.ROLE_CHOICES %}
-                <option value="{{ value }}" {% if role == value %}selected{% endif %}>{{ label }}</option>
+            <label class="form-label">Group</label>
+            <select class="form-select" name="group">
+                <option value="">All Groups</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}" {% if group == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -45,7 +45,7 @@
                 <i class="fas fa-filter"></i> Filter
             </button>
         </div>
-        {% if role or department_id or search %}
+        {% if group or department_id or search %}
         <div class="col-lg-2 d-grid">
             <a class="btn btn-ghost" href="{% url 'accounts:users' %}">Clear</a>
         </div>
@@ -58,7 +58,7 @@
                 <tr>
                     <th>#</th>
                     <th>Username</th>
-                    <th>Role</th>
+                    <th>Groups</th>
                     <th>Department</th>
                     <th>Status</th>
                     <th class="text-end">Action</th>
@@ -69,7 +69,13 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td class="fw-500">{{ u.username }}</td>
-                    <td>{{ u.get_role_display }}</td>
+                    <td>
+                        {% for g in u.groups.all %}
+                        <span class="chip blue">{{ g.name }}</span>
+                        {% empty %}
+                        —
+                        {% endfor %}
+                    </td>
                     <td>{{ u.department|default:"—" }}</td>
                     <td>
                         {% if u.is_locked %}
