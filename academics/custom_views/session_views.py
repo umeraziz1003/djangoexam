@@ -13,7 +13,12 @@ from ..models import Session
 @never_cache
 def sessions_view(request):
     search = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "")
     qs = Session.objects.all().order_by("-start_date")
+    if status == "active":
+        qs = qs.filter(is_active=True)
+    elif status == "inactive":
+        qs = qs.filter(is_active=False)
     if search:
         qs = qs.filter(Q(name__icontains=search))
 
@@ -26,6 +31,7 @@ def sessions_view(request):
         "page_obj": page_obj,
         "form": form,
         "search": search,
+        "status": status,
     })
 
 

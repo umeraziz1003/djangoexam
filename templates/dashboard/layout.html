@@ -63,6 +63,18 @@
                         href="{% url 'enrollments:enrollments' %}">
                         <i class="fas fa-book-open"></i> Student Course Enrollments
                     </a>
+                    <a class="nav-subitem{% if '/enrollments/semester-courses/' in path %} active{% endif %}"
+                        href="{% url 'enrollments:semester_courses' %}">
+                        <i class="fas fa-layer-group"></i> Courses by Semester
+                    </a>
+                    <a class="nav-subitem{% if '/enrollments/course-students/' in path %} active{% endif %}"
+                        href="{% url 'enrollments:course_students' %}">
+                        <i class="fas fa-users"></i> Students in Course
+                    </a>
+                    <a class="nav-subitem{% if '/enrollments/student-courses/' in path %} active{% endif %}"
+                        href="{% url 'enrollments:student_courses' %}">
+                        <i class="fas fa-book"></i> Courses by Student
+                    </a>
                     
                 </div>
             </div>

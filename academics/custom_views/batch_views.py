@@ -13,7 +13,10 @@ from ..models import Batch, Department
 @never_cache
 def batches_view(request):
     search = request.GET.get("search", "").strip()
+    department_id = request.GET.get("department_id", "")
     qs = Batch.objects.select_related("department").order_by("-start_date")
+    if department_id:
+        qs = qs.filter(department_id=department_id)
     if search:
         qs = qs.filter(
             Q(title__icontains=search)
@@ -32,6 +35,7 @@ def batches_view(request):
         "form": form,
         "search": search,
         "departments": departments,
+        "department_id": department_id,
     })
 
 

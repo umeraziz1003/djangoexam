@@ -1,0 +1,145 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Students in Course — Result Management System{% endblock %}
+{% block topbar_display %}Students in Course{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>All Students in a Course</h2>
+    <p>Select a course offering to see enrolled students.</p>
+</div>
+
+<div class="rms-card">
+    <div class="section-head">
+        <h3><i class="fas fa-users me-2"></i>Course Students</h3>
+        <div class="d-flex gap-2">
+            <a class="btn btn-ghost btn-sm" href="{% url 'enrollments:semester_courses' %}">
+                <i class="fas fa-layer-group"></i> Courses by Semester
+            </a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'enrollments:student_courses' %}">
+                <i class="fas fa-book"></i> Courses by Student
+            </a>
+        </div>
+    </div>
+
+    {% if department_id or batch_id or semester_id or session_id or offering_id %}
+    <div class="badge-soft mb-3">
+        <strong>Showing:</strong>
+        {% if department_id %} Department selected{% endif %}
+        {% if batch_id %}{% if department_id %} •{% endif %} Batch selected{% endif %}
+        {% if semester_id %}{% if department_id or batch_id %} •{% endif %} Semester selected{% endif %}
+        {% if session_id %}{% if department_id or batch_id or semester_id %} •{% endif %} Session selected{% endif %}
+        {% if offering_id %}{% if department_id or batch_id or semester_id or session_id %} •{% endif %} Offering selected{% endif %}
+    </div>
+    {% endif %}
+
+    <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="course-students" data-auto-submit>
+        <div class="col-lg-3">
+            <label class="form-label">Department</label>
+            <select class="form-select" name="department_id" data-chain="department">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Batch</label>
+            <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                <option value="{{ b.id }}" data-department="{{ b.department_id }}"
+                    {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Semester</label>
+            <select class="form-select" name="semester_id" data-chain="semester" data-chain-parent="batch"
+                data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-param="batch_id">
+                <option value="">All Semesters</option>
+                {% for s in semesters %}
+                <option value="{{ s.id }}" data-batch="{{ s.batch_id }}"
+                    {% if semester_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Session</label>
+            <select class="form-select" name="session_id" data-chain-enable="semester">
+                <option value="">All Sessions</option>
+                {% for s in sessions %}
+                <option value="{{ s.id }}" {% if session_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-8">
+            <label class="form-label">Course Offering</label>
+            <select class="form-select" name="offering_id" data-chain="offering" data-chain-parents="department,batch,semester,session"
+                data-ajax-url="{% url 'enrollments:ajax_offerings' %}" data-ajax-params="department_id,batch_id,semester_id,session_id">
+                <option value="">Select Course Offering</option>
+                {% for o in offerings %}
+                <option value="{{ o.id }}"
+                    data-department="{{ o.course.department_id }}"
+                    data-batch="{{ o.semester.batch_id }}"
+                    data-semester="{{ o.semester_id }}"
+                    data-session="{{ o.session_id }}"
+                    {% if offering_id == o.id|stringformat:"s" %}selected{% endif %}>
+                    {{ o.course.course_code }} — {{ o.course.course_title }} ({{ o.session.name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Load
+            </button>
+        </div>
+        {% if department_id or batch_id or semester_id or session_id or offering_id %}
+        <div class="col-lg-2 d-grid">
+            <a class="btn btn-ghost" href="{% url 'enrollments:course_students' %}">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Roll No</th>
+                    <th>Batch</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enrollments %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-500">{{ e.student.full_name }}</td>
+                    <td><code>{{ e.student.roll_no }}</code></td>
+                    <td>{{ e.student.batch }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary"
+                            href="{% url 'enrollments:student_courses' %}?student_id={{ e.student.id }}">
+                            <i class="fas fa-book"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="rms-empty">
+                            <i class="fas fa-user-graduate fa-2x mb-2 d-block"></i>
+                            <p>No students found for this course offering.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

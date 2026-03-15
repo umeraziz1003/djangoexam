@@ -6,14 +6,20 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from ..forms import SemesterForm
-from ..models import Batch, Semester
+from ..models import Batch, Department, Semester
 
 
 @login_required(login_url="accounts:login_page")
 @never_cache
 def semesters_view(request):
     search = request.GET.get("search", "").strip()
+    department_id = request.GET.get("department_id", "")
+    batch_id = request.GET.get("batch_id", "")
     qs = Semester.objects.select_related("batch").order_by("batch", "semester_number")
+    if department_id:
+        qs = qs.filter(batch__department_id=department_id)
+    if batch_id:
+        qs = qs.filter(batch_id=batch_id)
     if search:
         qs = qs.filter(
             Q(semester_number__icontains=search)
@@ -25,6 +31,9 @@ def semesters_view(request):
     page_obj = paginator.get_page(request.GET.get("page"))
     form = SemesterForm()
     batches = Batch.objects.all().order_by("-start_date")
+    if department_id:
+        batches = batches.filter(department_id=department_id)
+    departments = Department.objects.filter(is_active=True)
 
     return render(request, "academics/semesters.html", {
         "semesters": page_obj,
@@ -32,6 +41,9 @@ def semesters_view(request):
         "form": form,
         "search": search,
         "batches": batches,
+        "departments": departments,
+        "department_id": department_id,
+        "batch_id": batch_id,
     })
 
 

@@ -66,8 +66,37 @@
             </div>
 
             <!-- Filters -->
-            <form method="get" class="row g-2 align-items-end mb-3">
-                <div class="col-lg-4">
+            <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="course-offerings" data-auto-submit>
+                <div class="col-lg-3">
+                    <label class="form-label">Department</label>
+                    <select class="form-select" name="department_id" data-chain="department">
+                        <option value="">All Departments</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label">Batch</label>
+                    <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                        data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                        <option value="">All Batches</option>
+                        {% for b in batches %}
+                        <option value="{{ b.id }}" {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label">Semester</label>
+                    <select class="form-select" name="semester_id" data-chain="semester" data-chain-parent="batch"
+                        data-ajax-url="{% url 'enrollments:ajax_semesters' %}" data-ajax-param="batch_id">
+                        <option value="">All Semesters</option>
+                        {% for s in semesters %}
+                        <option value="{{ s.id }}" {% if semester_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
                     <label class="form-label">Session</label>
                     <select title="Session" class="form-select" name="session_id">
                         <option value="">All Sessions</option>
@@ -76,25 +105,16 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-lg-4">
-                    <label class="form-label">Semester</label>
-                    <select title="Semester" class="form-select" name="semester_id">
-                        <option value="">All Semesters</option>
-                        {% for s in semesters %}
-                        <option value="{{ s.id }}" {% if semester_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
                 <div class="col-lg-3">
                     <label class="form-label">Search</label>
-                    <input type="text" class="form-control" name="search" placeholder="Course or instructor…" value="{{ search }}">
+                    <input type="text" class="form-control" name="search" placeholder="Course or instructor?" value="{{ search }}">
                 </div>
                 <div class="col-lg-1 d-grid">
                     <button type="submit" class="btn btn-outline-primary" aria-label="Filter offerings">
                         <i class="fas fa-filter"></i>
                     </button>
                 </div>
-                {% if session_id or semester_id or search %}
+                {% if department_id or batch_id or session_id or semester_id or search %}
                 <div class="col-lg-12">
                     <a href="{% url 'courses:course_offerings' %}" class="btn btn-ghost">Clear</a>
                 </div>
@@ -158,19 +178,19 @@
                 <ul class="pagination pagination-sm mb-0">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
                     {% endif %}
                     {% for num in page_obj.paginator.page_range %}
                     <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                        <a class="page-link" href="?page={{ num }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                        <a class="page-link" href="?page={{ num }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
                     </li>
                     {% endfor %}
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if session_id %}&session_id={{ session_id }}{% endif %}{% if semester_id %}&semester_id={{ semester_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>

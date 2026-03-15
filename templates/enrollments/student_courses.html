@@ -1,0 +1,122 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Courses by Student — Result Management System{% endblock %}
+{% block topbar_display %}Courses by Student{% endblock %}
+
+{% block dashboard_content %}
+<div class="rms-page-head">
+    <h2>Courses Taken by Student</h2>
+    <p>Select a student to view enrolled courses.</p>
+</div>
+
+<div class="rms-card">
+    <div class="section-head">
+        <h3><i class="fas fa-book me-2"></i>Student Courses</h3>
+        <div class="d-flex gap-2">
+            <a class="btn btn-ghost btn-sm" href="{% url 'enrollments:semester_courses' %}">
+                <i class="fas fa-layer-group"></i> Courses by Semester
+            </a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'enrollments:course_students' %}">
+                <i class="fas fa-users"></i> Students in Course
+            </a>
+        </div>
+    </div>
+
+    {% if department_id or batch_id or student_id %}
+    <div class="badge-soft mb-3">
+        <strong>Showing:</strong>
+        {% if department_id %} Department selected{% endif %}
+        {% if batch_id %}{% if department_id %} •{% endif %} Batch selected{% endif %}
+        {% if student_id %}{% if department_id or batch_id %} •{% endif %} Student selected{% endif %}
+    </div>
+    {% endif %}
+
+    <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="student-courses" data-auto-submit>
+        <div class="col-lg-4">
+            <label class="form-label">Department</label>
+            <select class="form-select" name="department_id" data-chain="department">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Batch</label>
+            <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                <option value="{{ b.id }}" data-department="{{ b.department_id }}"
+                    {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-8">
+            <label class="form-label">Student</label>
+            <select class="form-select" name="student_id" data-chain="student" data-chain-parent="batch"
+                data-ajax-url="{% url 'enrollments:ajax_students' %}" data-ajax-params="department_id,batch_id">
+                <option value="">Select Student</option>
+                {% for s in students %}
+                <option value="{{ s.id }}" data-batch="{{ s.batch_id }}"
+                    {% if student_id == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.roll_no }} — {{ s.full_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Load
+            </button>
+        </div>
+        {% if department_id or batch_id or student_id %}
+        <div class="col-lg-2 d-grid">
+            <a class="btn btn-ghost" href="{% url 'enrollments:student_courses' %}">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="rms-table-wrap">
+        <table class="table table-sm align-middle rms-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Session</th>
+                    <th>Semester</th>
+                    <th>Instructor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enrollments %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="fw-500">{{ e.student.full_name }}</div>
+                        <div class="rms-muted"><code>{{ e.student.roll_no }}</code></div>
+                    </td>
+                    <td>
+                        <div class="fw-500">{{ e.course_offering.course.course_title }}</div>
+                        <div class="rms-muted"><code>{{ e.course_offering.course.course_code }}</code></div>
+                    </td>
+                    <td>{{ e.course_offering.session.name }}</td>
+                    <td>{{ e.course_offering.semester }}</td>
+                    <td>{{ e.course_offering.instructor_name }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="rms-empty">
+                            <i class="fas fa-book-open fa-2x mb-2 d-block"></i>
+                            <p>No courses found for this student.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

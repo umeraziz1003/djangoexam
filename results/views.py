@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 
-from academics.models import Semester, Session
+from academics.models import Department, Batch, Semester, Session
 from admission.models import Student
 from courses.models import CourseOffering
 from enrollments.models import Enrollment
@@ -51,6 +51,8 @@ def _recalc_result(enrollment):
 @never_cache
 def results_view(request):
     search = request.GET.get("search", "").strip()
+    department_id = request.GET.get("department_id", "")
+    batch_id = request.GET.get("batch_id", "")
     session_id = request.GET.get("session_id", "")
     semester_id = request.GET.get("semester_id", "")
     offering_id = request.GET.get("offering_id", "")
@@ -68,6 +70,10 @@ def results_view(request):
         qs = qs.filter(course_offering__session_id=session_id)
     if semester_id:
         qs = qs.filter(course_offering__semester_id=semester_id)
+    if department_id:
+        qs = qs.filter(course_offering__course__department_id=department_id)
+    if batch_id:
+        qs = qs.filter(student__batch_id=batch_id)
     if offering_id:
         qs = qs.filter(course_offering_id=offering_id)
     if student_id:
@@ -128,7 +134,11 @@ def results_view(request):
         "semesters": Semester.objects.select_related("batch").all(),
         "offerings": CourseOffering.objects.select_related("course", "session", "semester").order_by("course__course_code"),
         "students": Student.objects.filter(is_active=True).order_by("roll_no"),
+        "departments": Department.objects.filter(is_active=True).order_by("name"),
+        "batches": Batch.objects.all().order_by("start_date"),
         "search": search,
+        "department_id": department_id,
+        "batch_id": batch_id,
         "session_id": session_id,
         "semester_id": semester_id,
         "offering_id": offering_id,

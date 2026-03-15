@@ -19,6 +19,42 @@
         </div>
     </div>
 
+    <form method="get" class="row g-2 align-items-end mb-3" data-chain-group="students" data-auto-submit>
+        <div class="col-lg-4">
+            <label class="form-label">Department</label>
+            <select class="form-select" name="department_id" data-chain="department">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Batch</label>
+            <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                <option value="{{ b.id }}" {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" name="search" placeholder="Name or roll no…" value="{{ search }}">
+        </div>
+        <div class="col-lg-2 d-grid">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+        {% if department_id or batch_id or search %}
+        <div class="col-lg-2 d-grid">
+            <a class="btn btn-ghost" href="{% url 'admission:students' %}">Clear</a>
+        </div>
+        {% endif %}
+    </form>
+
     <div class="rms-table-wrap">
         <table class="table table-sm align-middle rms-table mb-0">
             <thead>

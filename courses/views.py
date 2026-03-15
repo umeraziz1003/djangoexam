@@ -146,6 +146,8 @@ def course_offerings_view(request):
 
     # GET — filters
     search = request.GET.get("search", "").strip()
+    department_id = request.GET.get("department_id", "")
+    batch_id = request.GET.get("batch_id", "")
     session_id = request.GET.get("session_id", "")
     semester_id = request.GET.get("semester_id", "")
 
@@ -161,6 +163,10 @@ def course_offerings_view(request):
         qs = qs.filter(session_id=session_id)
     if semester_id:
         qs = qs.filter(semester_id=semester_id)
+    if department_id:
+        qs = qs.filter(course__department_id=department_id)
+    if batch_id:
+        qs = qs.filter(semester__batch_id=batch_id)
     if search:
         qs = qs.filter(
             Q(course__course_code__icontains=search)
@@ -177,7 +183,11 @@ def course_offerings_view(request):
         "courses": Course.objects.select_related("department").order_by("course_code"),
         "semesters": Semester.objects.select_related("batch").all(),
         "sessions": Session.objects.order_by("-start_date"),
+        "departments": Department.objects.filter(is_active=True),
+        "batches": Batch.objects.all().order_by("start_date"),
         "search": search,
+        "department_id": department_id,
+        "batch_id": batch_id,
         "session_id": session_id,
         "semester_id": semester_id,
     }

@@ -59,9 +59,16 @@
             </div>
 
             <!-- Search -->
-            <form action="" method="get" class="row g-2 mb-3 align-items-center">
+            <form action="" method="get" class="row g-2 mb-3 align-items-center" data-chain-group="sessions" data-auto-submit>
+                <div class="col-md-4">
+                    <select class="form-select" name="status" data-chain="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
                 <div class="col">
-                    <input type="text" name="search" class="form-control" placeholder="Search by session name…"
+                    <input type="text" name="search" class="form-control" placeholder="Search by session name?"
                         value="{{ search }}">
                 </div>
                 <div class="col-auto">
@@ -69,7 +76,7 @@
                         <i class="fas fa-magnifying-glass"></i> Search
                     </button>
                 </div>
-                {% if search %}
+                {% if search or status %}
                 <div class="col-auto">
                     <a href="{% url 'academics:sessions' %}" class="btn btn-ghost">Clear</a>
                 </div>
@@ -179,19 +186,19 @@
                 <ul class="pagination pagination-sm mb-0">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
                     {% endif %}
                     {% for num in page_obj.paginator.page_range %}
                     <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                        <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                        <a class="page-link" href="?page={{ num }}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
                     </li>
                     {% endfor %}
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>

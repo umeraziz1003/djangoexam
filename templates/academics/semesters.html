@@ -55,7 +55,24 @@
             </div>
 
             <!-- Search -->
-            <form action="" method="get" class="row g-2 mb-3 align-items-center">
+            <form action="" method="get" class="row g-2 mb-3 align-items-center" data-chain-group="semesters" data-auto-submit>
+                <div class="col-md-4">
+                    <select class="form-select" name="department_id" data-chain="department">
+                        <option value="">All Departments</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" name="batch_id" data-chain="batch" data-chain-parent="department"
+                        data-ajax-url="{% url 'enrollments:ajax_batches' %}" data-ajax-param="department_id">
+                        <option value="">All Batches</option>
+                        {% for b in batches %}
+                        <option value="{{ b.id }}" {% if batch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="col">
                     <input type="text" name="search" class="form-control" placeholder="Search by batch or semester number…"
                         value="{{ search }}">
@@ -65,7 +82,7 @@
                         <i class="fas fa-magnifying-glass"></i> Search
                     </button>
                 </div>
-                {% if search %}
+                {% if search or department_id or batch_id %}
                 <div class="col-auto">
                     <a href="{% url 'academics:semesters' %}" class="btn btn-ghost">Clear</a>
                 </div>
@@ -164,19 +181,19 @@
                 <ul class="pagination pagination-sm mb-0">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
                     {% endif %}
                     {% for num in page_obj.paginator.page_range %}
                     <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                        <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                        <a class="page-link" href="?page={{ num }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
                     </li>
                     {% endfor %}
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if department_id %}&department_id={{ department_id }}{% endif %}{% if batch_id %}&batch_id={{ batch_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>
